@@ -1,0 +1,46 @@
+language: php
+
+dist: trusty
+root: false
+
+env:
+    global:
+    - setup=stable
+
+cache:
+    directories:
+    - $HOME/.composer/cache
+
+matrix:
+    fast_finish: true
+    allow_failures:
+    - php: hhvm
+    include:
+    - php: 5.5
+    - php: 5.5
+      env: setup=lowest
+    - php: 5.6
+    - php: 5.6
+      env: setup=lowest
+    - php: 7.0
+    - php: 7.0
+      env: setup=lowest
+    - php: 7.1
+    - php: 7.1
+      env: setup=lowest
+    - php: 7.2
+    - php: 7.2
+      env: setup=lowest
+    - php: hhvm
+    - php: hhvm
+      env: setup=lowest
+
+before_install:
+- travis_retry composer self-update
+- openssl aes-256-cbc -K $encrypted_35f90653928635e2_key -iv $encrypted_35f90653928635e2_iv -in tests/config.php.enc -out tests/config.php -d
+
+install:
+- if [[ $setup = 'stable' ]]; then travis_retry composer update --dev --prefer-dist --no-interaction --prefer-stable --no-suggest; fi
+- if [[ $setup = 'lowest' ]]; then travis_retry composer update --dev --prefer-dist --no-interaction --prefer-lowest --prefer-stable --no-suggest; fi
+
+script: composer run test
