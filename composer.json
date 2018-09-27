@@ -1,16 +1,10 @@
 {
     "name": "qiwi/bill-payments-php-sdk",
     "type": "library",
-    "version": "1.0.1",
+    "version": "0.0.1",
     "description": "Universal payments API SDK",
     "license": "MIT",
     "homepage": "https://github.com/QIWI-API/bill-payments-php-sdk",
-    "repositories": [
-        {
-            "type": "vcs",
-            "url": "https://github.com/Seldaek/monolog"
-        }
-    ],
     "support": {
         "issues": "https://github.com/QIWI-API/bill-payments-php-sdk/issues"
     },
@@ -22,8 +16,8 @@
         "ramsey/uuid": "^3.8"
     },
     "require-dev": {
-        "phpunit/phpunit": "^7.3",
-        "phpdocumentor/phpdocumentor": "^2.9"
+        "phpunit/phpunit": "4.8.36",
+        "phpdocumentor/phpdocumentor": "*"
     },
 	"autoload": {
         "psr-4": {
@@ -35,9 +29,6 @@
             "Qiwi\\Api\\": "tests/"
         }
 	},
-    "config": {
-        "github-protocols": ["https"]
-    },
     "scripts": {
         "test": "phpunit --verbose",
         "docs": "phpdoc run --verbose"

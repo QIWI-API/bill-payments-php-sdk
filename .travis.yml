@@ -37,6 +37,7 @@ matrix:
 
 before_install:
 - travis_retry composer self-update
+- travis_retry composer config -g github-oauth.github.com "$GITHUB_TOKEN"
 - openssl aes-256-cbc -K $encrypted_35f90653928635e2_key -iv $encrypted_35f90653928635e2_iv -in tests/config.php.enc -out tests/config.php -d
 
 install:
