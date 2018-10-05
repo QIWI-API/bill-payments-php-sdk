@@ -230,7 +230,7 @@ class BillPayments
                 'apiClient' => 'apiClient',
                 'apiClientVersion' => 'php_sdk',
             ],
-        ]);
+        ]));
     }
 
     /**
