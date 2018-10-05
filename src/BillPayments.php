@@ -226,7 +226,11 @@ class BillPayments
                 'account' => isset($params['account']) ? $params['account'] : null,
             ]),
             'extra' => isset($params['extra']) ? $params['extra'] : null,
-        ]));
+            'customFields' => [
+                'apiClient' => 'apiClient',
+                'apiClientVersion' => 'php_sdk',
+            ],
+        ]);
     }
 
     /**
