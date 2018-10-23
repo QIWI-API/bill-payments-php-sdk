@@ -12,6 +12,19 @@ use Ramsey\Uuid\Uuid;
 use Exception;
 use DateTime;
 
+/** @var string CLIENT_NAME The client name */
+if (!defined('CLIENT_NAME')) {
+    define('CLIENT_NAME', 'php_sdk');
+}
+
+/** @var string CLIENT_VERSION The client version */
+if (!defined('CLIENT_VERSION')) {
+    define('CLIENT_VERSION', @json_decode(
+        file_get_contents(dirname(__DIR__) . DIRECTORY_SEPARATOR . 'composer.json'),
+        true
+    )['version']);
+}
+
 /**
  * Class for rest v 3.
  * @see https://developer.qiwi.com/en/bill-payments
@@ -181,18 +194,43 @@ class BillPayments
     }
 
     /**
+     * Get pay URL witch success URL param.
+     *
+     * @param array $bill The bill
+     * @param string $successUrl The success URL
+     * @return string
+     */
+    public function getPayUrl($bill, $successUrl) {
+        $payUrl = parse_url($bill['payUrl']);
+        if (array_key_exists('query', $payUrl)) {
+            parse_str($payUrl['query'],$query);
+            $query['successUrl'] = $successUrl;
+        } else {
+            $query = [
+                'successUrl' => $successUrl
+            ];
+        }
+        $payUrl['query'] = http_build_query($query, '', '&', PHP_QUERY_RFC3986);
+        return $this->buildUrl($payUrl);
+    }
+
+    /**
      * Creating checkout link.
      *
      * @param array $params The parameters
-     *   ['billId']    string|number The bill identifier
-     *   ['publicKey'] string        The publicKey
-     *   ['amount']    string|number The amount
+     *   ['billId']     string|number The bill identifier
+     *   ['publicKey']  string        The publicKey
+     *   ['amount']     string|number The amount
+     *   ['successUrl'] string        The success url
      * @return string Return result
      */
     public function createPaymentForm($params)
     {
         $params['amount'] = isset($params['amount']) ? $this->normalizeAmount($params['amount']) : null;
-        return self::CREATE_URI . '?' . http_build_query($params);
+        $params['customFields'] = isset($params['customFields']) ? $params['customFields'] : [];
+        $params['customFields']['apiClient'] = CLIENT_NAME;
+        $params['customFields']['apiClientVersion'] = CLIENT_VERSION;
+        return self::CREATE_URI . '?' . http_build_query($params, '', '&', PHP_QUERY_RFC3986);
     }
 
     /**
@@ -200,20 +238,22 @@ class BillPayments
      *
      * @param string|number $billId The bill identifier
      * @param array $params The parameters
-     *   ['amount'] string|number The amount
-     *   ['currency'] string The currency
-     *   ['comment'] string The bill comment
-     *   ['expirationDateTime'] string The bill expiration datetime (ISOstring)
-     *   ['extra'] array The bill extra data
-     *   ['phone'] array The phone
-     *   ['email'] string The email
-     *   ['account'] string The account
+     *   ['amount']             string|number The amount
+     *   ['currency']           string        The currency
+     *   ['comment']            string        The bill comment
+     *   ['expirationDateTime'] string        The bill expiration datetime (ISOstring)
+     *   ['extra']              array         The bill custom fields
+     *   ['extra']              array         The bill custom fields (deprecated, will be removed soon)
+     *   ['phone']              array         The phone
+     *   ['email']              string        The email
+     *   ['account']            string        The account
+     *   ['successUrl']         string        The success url
      * @return array Return result
      * @throws BillPaymentsException Throw on API return invalid response
      */
     public function createBill($billId, $params)
     {
-        return $this->requestBuilder($billId, self::PUT, array_filter([
+        $bill = $this->requestBuilder($billId, self::PUT, array_filter([
             'amount' => array_filter([
                 'currency' => isset($params['currency']) ? $params['currency'] : null,
                 'value' => isset($params['amount']) ? $this->normalizeAmount($params['amount']) : null
@@ -225,12 +265,19 @@ class BillPayments
                 'email' => isset($params['email']) ? $params['email'] : null,
                 'account' => isset($params['account']) ? $params['account'] : null,
             ]),
-            'extra' => isset($params['extra']) ? $params['extra'] : null,
-            'customFields' => [
-                'apiClient' => 'apiClient',
-                'apiClientVersion' => 'php_sdk',
-            ],
+            'customFields' => array_merge_recursive(
+                isset($params['extra']) ? $params['extra'] : [], // extra is deprecated, will be removed in next minor update
+                isset($params['customFields']) ? $params['customFields'] : [],
+                [
+                    'apiClient' => CLIENT_NAME,
+                    'apiClientVersion' => CLIENT_VERSION,
+                ]
+            ),
         ]));
+        if (!empty($bill['payUrl']) && !empty($params['successUrl'])) {
+            $bill['payUrl'] = $this->getPayUrl($bill, $params['successUrl']);
+        }
+        return $bill;
     }
 
     /**
@@ -329,5 +376,24 @@ class BillPayments
             throw new BillPaymentsException(clone $this->internalCurl);
         }
         return empty($this->internalCurl->response) ? true : json_decode($this->internalCurl->response, true);
+    }
+
+    /**
+     * Build URL.
+     *
+     * @param array $parsedUrl The parsed URL
+     * @return string
+     */
+    protected function buildUrl($parsedUrl) {
+        $scheme   = isset($parsedUrl['scheme']) ? $parsedUrl['scheme'] . '://' : '';
+        $host     = isset($parsedUrl['host']) ? $parsedUrl['host'] : '';
+        $port     = isset($parsedUrl['port']) ? ':' . $parsedUrl['port'] : '';
+        $user     = isset($parsedUrl['user']) ? $parsedUrl['user'] : '';
+        $pass     = isset($parsedUrl['pass']) ? ':' . $parsedUrl['pass']  : '';
+        $pass     = ($user || $pass) ? "$pass@" : '';
+        $path     = isset($parsedUrl['path']) ? $parsedUrl['path'] : '';
+        $query    = isset($parsedUrl['query']) ? '?' . $parsedUrl['query'] : '';
+        $fragment = isset($parsedUrl['fragment']) ? '#' . $parsedUrl['fragment'] : '';
+        return $scheme . $user . $pass . $host . $port . $path . $query . $fragment;
     }
 }

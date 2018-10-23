@@ -65,7 +65,8 @@ $publicKey = '2tbp1WQvsgQeziGY9vTLe9vDZNg7tmCymb4Lh6STQokqKrpCC6qrUUKEDZAJ7mvFnz
 $params = [
   'publicKey' => $publicKey,
   'amount' => 200,
-  'billId' => '893794793973'
+  'billId' => '893794793973',
+  'successUrl' => 'http://test.ru/',
 ];
 
 /** @var \Qiwi\Api\BillPayments $billPayments */
@@ -79,7 +80,7 @@ echo $link;
 Вывод:
 
 ```
-https://oplata.qiwi.com/create?publicKey=2tbp1WQvsgQeziGY9vTLe9vDZNg7tmCymb4Lh6STQokqKrpCC6qrUUKEDZAJ7mvFnzr1yTebUiQaBLDnebLMMxL8nc6FF5zfmGQnypdXCbQJqHEJW5RJmKfj8nvgc&amount=200&billId=893794793973
+https://oplata.qiwi.com/create?publicKey=2tbp1WQvsgQeziGY9vTLe9vDZNg7tmCymb4Lh6STQokqKrpCC6qrUUKEDZAJ7mvFnzr1yTebUiQaBLDnebLMMxL8nc6FF5zfmGQnypdXCbQJqHEJW5RJmKfj8nvgc&amount=200&billId=893794793973&successUrl=http%3A%2F%2Ftest.ru%2F
 ```
 
 ### Выставление счета
@@ -98,7 +99,8 @@ $fields = [
   'comment' => 'test',
   'expirationDateTime' => '2018-03-02T08:44:07',
   'email' => 'example@mail.org',
-  'account' => 'client4563'
+  'account' => 'client4563',
+  'sucessUrl' => 'http://test.ru/',
 ];
 
 /** @var \Qiwi\Api\BillPayments $billPayments */
@@ -131,7 +133,7 @@ Array
     [comment] => test
     [creationDateTime] => 2018-07-12T10:28:38.855+03:00
     [expirationDateTime] => 2018-08-26T10:28:38.855+03:00
-    [payUrl] => https://oplata.qiwi.com/form/?invoice_uid=bb773791-9bd9-42c1-b8fc-3358cd108422
+    [payUrl] => https://oplata.qiwi.com/form/?invoice_uid=bb773791-9bd9-42c1-b8fc-3358cd108422&successUrl=http%3A%2F%2Ftest.ru%2F
 )
 ```
 
@@ -351,6 +353,19 @@ $merchantSecret = 'test-merchant-secret-for-signature-check';
 $billPayments->checkNotificationSignature(
   $validSignatureFromNotificationServer, $notificationData, $merchantSecret
 ); // true
+
+?>
+```
+
+* Метод `getPayUrl` возвращает URL оплаты по счету:
+
+```php
+<?php
+
+/** @var array $bill */
+/** @var \Qiwi\Api\BillPayments $billPayments */
+$payUrl = $billPayments->getPayUrl($bill, 'http://test.ru/');
+// https://oplata.qiwi.com/form/?invoice_uid=d875277b-6f0f-445d-8a83-f62c7c07be77&successUrl=http%3A%2F%2Ftest.ru%2F
 
 ?>
 ```

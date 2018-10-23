@@ -9,6 +9,15 @@ namespace Qiwi\Api;
 
 use PHPUnit\Framework\TestCase;
 
+/** @var string CLIENT_NAME The client name */
+if (!defined('CLIENT_NAME')) define('CLIENT_NAME', 'php_sdk');
+
+/** @var string CLIENT_VERSION The client version */
+if (!defined('CLIENT_VERSION')) define('CLIENT_VERSION', @json_decode(
+    file_get_contents(dirname(__DIR__) . DIRECTORY_SEPARATOR . 'composer.json'),
+    true
+)['version']);
+
 /**
  * Class BillPaymentsTest
  * @package Qiwi\Api
@@ -36,7 +45,15 @@ class BillPaymentsTest extends TestCase
         'currency' => 'RUB',
         'expirationDateTime' => '', // will be generate
         'providerName' => 'Test',
-        'comment' => 'test'
+        'comment' => 'test',
+        'phone' => '79999999999',
+        'email' => 'test@test.ru',
+        'account' => 'user uid on your side',
+        'customFields' => [
+            'city' => 'Москва',
+            'street' => 'Арбат'
+        ],
+        'successUrl' => 'http://test.ru/'
     ];
 
 
@@ -76,11 +93,22 @@ class BillPaymentsTest extends TestCase
         $uri = BillPayments::CREATE_URI;
         $amount_string = '200.34';
         $amount_number = 200.345;
-        $testLink = "{$uri}?publicKey={$this->config['merchantPublicKey']}&amount={$amount_string}&billId={$this->billId}";
+        $query = http_build_query([
+            'publicKey' => $this->config['merchantPublicKey'],
+            'amount' => $amount_string,
+            'billId' => $this->billId,
+            'successUrl' => $this->fields['successUrl'],
+            'customFields' => [
+                'apiClient' => CLIENT_NAME,
+                'apiClientVersion' => CLIENT_VERSION
+            ]
+        ], '', '&', PHP_QUERY_RFC3986);
+        $testLink = "{$uri}?{$query}";
         $result = $this->billPayments->createPaymentForm([
             'publicKey' => $this->config['merchantPublicKey'],
             'amount' => $amount_number,
-            'billId' => $this->billId
+            'billId' => $this->billId,
+            'successUrl' => $this->fields['successUrl']
         ]);
         $this->assertEquals($testLink, $result, 'creates payment form');
     }
@@ -120,35 +148,53 @@ class BillPaymentsTest extends TestCase
      * request - bill create
      * @throws BillPaymentsException
      */
-    public function testCreateBill()
+    public function subTestCreateBill()
     {
         $bill = $this->billPayments->createBill(
             $this->billId,
             $this->fields
         );
-        $this->assertTrue(is_array($bill),'create bill');
+        $testPayUrlQuery = http_build_query(['successUrl' => $this->fields['successUrl']], '', '&', PHP_QUERY_RFC3986);
+        $this->assertTrue(is_array($bill) && strpos($bill['payUrl'], $testPayUrlQuery) !== false,'create bill');
     }
 
     /**
      * request - bill info
      * @throws BillPaymentsException
      */
-    public function testGetBillInfo()
+    public function subTestGetBillInfo()
     {
-        $this->testCreateBill();
+        $this->subTestCreateBill();
         $bill = $this->billPayments->getBillInfo($this->billId);
-        $this->assertTrue(is_array($bill),'returns valid bill info');
+        $testFields = [
+            'customFields' => [
+                'apiClient' => CLIENT_NAME,
+                'apiClientVersion' => CLIENT_VERSION
+            ]
+        ];
+        $this->assertArraySubset($testFields, $bill, 'returns valid bill info');
+
     }
 
     /**
      * request - bill cancel
      * @throws BillPaymentsException
      */
-    public function testCancelBill()
+    public function subTestCancelBill()
     {
-        $this->testCreateBill();
         $bill = $this->billPayments->cancelBill($this->billId);
         $this->assertTrue(is_array($bill),'cancel unpaid bill');
+    }
+
+    /**
+     * requests life cycle
+     * @throws BillPaymentsException
+     */
+    public function testRequests()
+    {
+        $this->subTestCreateBill();
+        $this->subTestGetBillInfo();
+        $this->subTestCancelBill();
     }
 
     /**
