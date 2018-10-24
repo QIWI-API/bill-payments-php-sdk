@@ -50,9 +50,11 @@ class BillPaymentsException extends Exception
      * @return mixed The property value
      * @throws Exception Throw on unexpected property get
      */
-    function __get($name)
+    public function __get($name)
     {
-        if ($name === 'curl') return $this->internalCurl;
+        if ($name === 'curl') {
+            return $this->internalCurl;
+        }
         throw new Exception("Undefined property {$name}");
     }
 
@@ -63,9 +65,11 @@ class BillPaymentsException extends Exception
      * @return bool Property set or not
      * @throws Exception Throw on unexpected property check
      */
-    function __isset($name)
+    public function __isset($name)
     {
-        if ($name === 'curl') return !empty($this->internalCurl);
+        if ($name === 'curl') {
+            return !empty($this->internalCurl);
+        }
         throw new Exception("Undefined property {$name}");
     }
 }

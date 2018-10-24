@@ -10,13 +10,17 @@ namespace Qiwi\Api;
 use PHPUnit\Framework\TestCase;
 
 /** @var string CLIENT_NAME The client name */
-if (!defined('CLIENT_NAME')) define('CLIENT_NAME', 'php_sdk');
+if (!defined('CLIENT_NAME')) {
+    define('CLIENT_NAME', 'php_sdk');
+}
 
 /** @var string CLIENT_VERSION The client version */
-if (!defined('CLIENT_VERSION')) define('CLIENT_VERSION', @json_decode(
-    file_get_contents(dirname(__DIR__) . DIRECTORY_SEPARATOR . 'composer.json'),
-    true
-)['version']);
+if (!defined('CLIENT_VERSION')) {
+    define('CLIENT_VERSION', @json_decode(
+        file_get_contents(dirname(__DIR__) . DIRECTORY_SEPARATOR . 'composer.json'),
+        true
+    )['version']);
+}
 
 /**
  * Class BillPaymentsTest
@@ -155,7 +159,7 @@ class BillPaymentsTest extends TestCase
             $this->fields
         );
         $testPayUrlQuery = http_build_query(['successUrl' => $this->fields['successUrl']], '', '&', PHP_QUERY_RFC3986);
-        $this->assertTrue(is_array($bill) && strpos($bill['payUrl'], $testPayUrlQuery) !== false,'create bill');
+        $this->assertTrue(is_array($bill) && strpos($bill['payUrl'], $testPayUrlQuery) !== false, 'create bill');
     }
 
     /**
@@ -173,7 +177,6 @@ class BillPaymentsTest extends TestCase
             ]
         ];
         $this->assertArraySubset($testFields, $bill, 'returns valid bill info');
-
     }
 
     /**
@@ -183,7 +186,7 @@ class BillPaymentsTest extends TestCase
     public function subTestCancelBill()
     {
         $bill = $this->billPayments->cancelBill($this->billId);
-        $this->assertTrue(is_array($bill),'cancel unpaid bill');
+        $this->assertTrue(is_array($bill), 'cancel unpaid bill');
     }
 
     /**
@@ -209,7 +212,7 @@ class BillPaymentsTest extends TestCase
             '0.01',
             'RUB'
         );
-        $this->assertTrue(is_array($billRefund),'makes refund');
+        $this->assertTrue(is_array($billRefund), 'makes refund');
     }
 
     /**
@@ -222,6 +225,6 @@ class BillPaymentsTest extends TestCase
             $this->config['billIdForGetRefundInfoTest'],
             $this->config['billRefundIdForGetRefundInfoTest']
         );
-        $this->assertTrue(is_array($billRefund),'gets refund info');
+        $this->assertTrue(is_array($billRefund), 'gets refund info');
     }
 }

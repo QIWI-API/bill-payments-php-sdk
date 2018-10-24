@@ -76,7 +76,7 @@ class BillPayments
      * @param array $options The dictionary of request options
      * @throws \ErrorException Throw on Curl extension missed
      */
-    function __construct($key = '', array $options = [])
+    public function __construct($key = '', array $options = [])
     {
         $this->secretKey = (string) $key;
         $this->options = $options;
@@ -90,10 +90,14 @@ class BillPayments
      * @param mixed $value The property value
      * @throws Exception Throw on unexpected property set
      */
-    function __set($name, $value)
+    public function __set($name, $value)
     {
-        if ($name === 'key') $this->secretKey = (string) $value;
-        if ($name === 'curl') throw new Exception("Not acceptable property {$name}");
+        if ($name === 'key') {
+            $this->secretKey = (string)$value;
+        }
+        if ($name === 'curl') {
+            throw new Exception("Not acceptable property {$name}");
+        }
         throw new Exception("Undefined property {$name}");
     }
 
@@ -104,10 +108,14 @@ class BillPayments
      * @return mixed The property value
      * @throws Exception Throw on unexpected property get
      */
-    function __get($name)
+    public function __get($name)
     {
-        if ($name === 'key') throw new Exception("Not acceptable property {$name}");
-        if ($name === 'curl') return $this->internalCurl;
+        if ($name === 'key') {
+            throw new Exception("Not acceptable property {$name}");
+        }
+        if ($name === 'curl') {
+            return $this->internalCurl;
+        }
         throw new Exception("Undefined property {$name}");
     }
 
@@ -118,10 +126,14 @@ class BillPayments
      * @return bool Property set or not
      * @throws Exception Throw on unexpected property check
      */
-    function __isset($name)
+    public function __isset($name)
     {
-        if ($name === 'key') return !empty($this->secretKey);
-        if ($name === 'curl') return !empty($this->internalCurl);
+        if ($name === 'key') {
+            return !empty($this->secretKey);
+        }
+        if ($name === 'curl') {
+            return !empty($this->internalCurl);
+        }
         throw new Exception("Undefined property {$name}");
     }
 
@@ -137,11 +149,21 @@ class BillPayments
     public function checkNotificationSignature($signature, $notificationBody, $merchantSecret)
     {
         $processedNotificationData = [
-            'billId' => (string) isset($notificationBody['bill']['billId']) ? $notificationBody['bill']['billId'] : '',
-            'amount.value' => (string) isset($notificationBody['bill']['amount']['value']) ? $this->normalizeAmount($notificationBody['bill']['amount']['value']) : 0,
-            'amount.currency' => (string) isset($notificationBody['bill']['amount']['currency']) ? $notificationBody['bill']['amount']['currency'] : '',
-            'siteId' => (string) isset($notificationBody['bill']['siteId']) ? $notificationBody['bill']['siteId'] : '',
-            'status' => (string) isset($notificationBody['bill']['status']['value']) ? $notificationBody['bill']['status']['value'] : ''
+            'billId' => (string) isset($notificationBody['bill']['billId'])
+                ? $notificationBody['bill']['billId']
+                : '',
+            'amount.value' => (string) isset($notificationBody['bill']['amount']['value'])
+                ? $this->normalizeAmount($notificationBody['bill']['amount']['value'])
+                : 0,
+            'amount.currency' => (string) isset($notificationBody['bill']['amount']['currency'])
+                ? $notificationBody['bill']['amount']['currency']
+                : '',
+            'siteId' => (string) isset($notificationBody['bill']['siteId'])
+                ? $notificationBody['bill']['siteId']
+                : '',
+            'status' => (string) isset($notificationBody['bill']['status']['value'])
+                ? $notificationBody['bill']['status']['value']
+                : ''
         ];
         ksort($processedNotificationData);
         $processedNotificationDataKeys = join(self::VALUE_SEPARATOR, $processedNotificationData);
@@ -178,7 +200,8 @@ class BillPayments
      * @param string|float|int $amount The value
      * @return string The API value
      */
-    public function normalizeAmount($amount = 0) {
+    public function normalizeAmount($amount = 0)
+    {
         return number_format(round(floatval($amount), 2, PHP_ROUND_HALF_DOWN), 2, '.', '');
     }
 
@@ -200,10 +223,11 @@ class BillPayments
      * @param string $successUrl The success URL
      * @return string
      */
-    public function getPayUrl($bill, $successUrl) {
+    public function getPayUrl($bill, $successUrl)
+    {
         $payUrl = parse_url($bill['payUrl']);
         if (array_key_exists('query', $payUrl)) {
-            parse_str($payUrl['query'],$query);
+            parse_str($payUrl['query'], $query);
             $query['successUrl'] = $successUrl;
         } else {
             $query = [
@@ -384,7 +408,8 @@ class BillPayments
      * @param array $parsedUrl The parsed URL
      * @return string
      */
-    protected function buildUrl($parsedUrl) {
+    protected function buildUrl($parsedUrl)
+    {
         $scheme   = isset($parsedUrl['scheme']) ? $parsedUrl['scheme'] . '://' : '';
         $host     = isset($parsedUrl['host']) ? $parsedUrl['host'] : '';
         $port     = isset($parsedUrl['port']) ? ':' . $parsedUrl['port'] : '';
