@@ -96,8 +96,8 @@ class BillPayments
             case 'key':
                 $this->secretKey = (string)$value;
                 break;
-            case 'curl': throw new Exception("Not acceptable property {$name}");
-                break;
+            case 'curl':
+                throw new Exception("Not acceptable property {$name}");
             default:
                 throw new Exception("Undefined property {$name}");
         }
