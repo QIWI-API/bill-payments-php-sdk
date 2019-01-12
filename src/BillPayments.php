@@ -112,13 +112,14 @@ class BillPayments
      */
     public function __get($name)
     {
-        if ($name === 'key') {
-            throw new Exception("Not acceptable property {$name}");
-        }
-        if ($name === 'curl') {
-            return $this->internalCurl;
-        }
-        throw new Exception("Undefined property {$name}");
+		switch ($name) {
+			case 'key':
+				throw new Exception("Not acceptable property {$name}");
+			case 'curl':
+				return $this->internalCurl;
+			default:
+				throw new Exception("Undefined property {$name}");
+		}
     }
 
     /**
@@ -130,13 +131,14 @@ class BillPayments
      */
     public function __isset($name)
     {
-        if ($name === 'key') {
-            return !empty($this->secretKey);
-        }
-        if ($name === 'curl') {
-            return !empty($this->internalCurl);
-        }
-        throw new Exception("Undefined property {$name}");
+		switch ($name) {
+			case 'key':
+				return !empty($this->secretKey);
+			case 'curl':
+				return !empty($this->internalCurl);
+			default:
+				throw new Exception("Undefined property {$name}");
+		}
     }
 
 

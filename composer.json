@@ -1,7 +1,7 @@
 {
     "name": "qiwi/bill-payments-php-sdk",
     "type": "library",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "description": "Universal payments API SDK",
     "license": "MIT",
     "homepage": "https://github.com/QIWI-API/bill-payments-php-sdk",
