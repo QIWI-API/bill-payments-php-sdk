@@ -92,13 +92,15 @@ class BillPayments
      */
     public function __set($name, $value)
     {
-        if ($name === 'key') {
-            $this->secretKey = (string)$value;
+        switch ($name) {
+            case 'key':
+                $this->secretKey = (string)$value;
+                break;
+            case 'curl':
+                throw new Exception("Not acceptable property {$name}");
+            default:
+                throw new Exception("Undefined property {$name}");
         }
-        if ($name === 'curl') {
-            throw new Exception("Not acceptable property {$name}");
-        }
-        throw new Exception("Undefined property {$name}");
     }
 
     /**
