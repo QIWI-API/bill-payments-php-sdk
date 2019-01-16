@@ -372,10 +372,21 @@ $payUrl = $billPayments->getPayUrl($bill, 'http://test.ru/');
 
 ## Тестирование
 
+Текстирования с реальным API требует наличие файла `tests/config.php` заполненного по примеру из файла `tests/config.sample.php`. 
+Для этого вам понадобится секретный ключ магазина.
+
 ```bash
 cd bill-payments-php-sdk
 composer install --dev
 composer run test
+```
+
+Тестирования без истользования реального API: 
+
+```bash
+cd bill-payments-php-sdk
+composer install --dev
+composer run util
 ```
 
 ## Требования

@@ -9,8 +9,11 @@
          processIsolation="false"
          stopOnFailure="false">
     <testsuites>
-        <testsuite name="Qiwi\BillPayments">
-            <directory suffix="Test.php">./tests</directory>
+        <testsuite name="acceptance">
+            <directory suffix="Test.php">./tests/acceptance</directory>
+        </testsuite>
+        <testsuite name="util">
+            <directory suffix="Test.php">./tests/util</directory>
         </testsuite>
     </testsuites>
 </phpunit>

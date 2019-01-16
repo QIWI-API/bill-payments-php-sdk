@@ -1,8 +1,11 @@
 <?php
 /**
- * BillPayments.php
- * @copyright Copyright (c) QIWI JSC
- * @license MIT
+ * QIWI bill payments SDK.
+ *
+ * @package   Qiwi\Api
+ * @author    Yaroslav <yaroslav@wannabe.pro>
+ * @copyright 2019 (c) QIWI JSC
+ * @license   MIT https://raw.githubusercontent.com/QIWI-API/bill-payments-php-sdk/master/LICENSE
  */
 
 namespace Qiwi\Api;
@@ -10,419 +13,646 @@ namespace Qiwi\Api;
 use Curl\Curl;
 use Ramsey\Uuid\Uuid;
 use Exception;
-use DateTime;
 
-/** @var string CLIENT_NAME The client name */
-if (!defined('CLIENT_NAME')) {
+if (false === defined('CLIENT_NAME')) {
+    //phpcs:disable Squiz.Commenting -- Because contingent constant definition.
+    /**
+     * The client name fingerprint.
+     *
+     * @const string
+     */
     define('CLIENT_NAME', 'php_sdk');
+    //phpcs:enable Squiz.Commenting
 }
 
-/** @var string CLIENT_VERSION The client version */
-if (!defined('CLIENT_VERSION')) {
-    define('CLIENT_VERSION', @json_decode(
-        file_get_contents(dirname(__DIR__) . DIRECTORY_SEPARATOR . 'composer.json'),
-        true
-    )['version']);
+if (false === defined('CLIENT_VERSION')) {
+    //phpcs:disable Squiz.Commenting -- Because contingent constant definition.
+    /**
+     * The client version fingerprint.
+     *
+     * @const string
+     */
+    define(
+        'CLIENT_VERSION',
+        @json_decode(
+            file_get_contents(dirname(__DIR__).DIRECTORY_SEPARATOR.'composer.json'),
+            true
+        )['version']
+    );
+    //phpcs:enable Squiz.Commenting
 }
 
 /**
  * Class for rest v 3.
- * @see https://developer.qiwi.com/en/bill-payments
  *
- * @property string $key The secret key is set-only
- * @property Curl $curl The request is get-only
+ * @see https://developer.qiwi.com/en/bill-payments API Documentation.
+ *
+ * @property string $key  The secret key is set-only.
+ * @property Curl   $curl The request is get-only.
  */
 class BillPayments
 {
-    /** @var string The default separator */
+    /**
+     * The default separator.
+     *
+     * @const string
+     */
     const VALUE_SEPARATOR = '|';
 
-    /** @var string The default hash algorithm */
+    /**
+     * The default hash algorithm.
+     *
+     * @const string
+     */
     const DEFAULT_ALGORITHM = 'sha256';
 
-    /** @var string The default hash encoding */
+    /**
+     * The default hash encoding.
+     *
+     * @const string
+     */
     const DEFAULT_ENCODING = 'hex';
 
-    /** @var string The API get method */
+    /**
+     * The API datetime format.
+     *
+     * @const string
+     */
+    const DATETIME_FORMAT = 'Y-m-d\TH:i:sP';
+
+    /**
+     * The API get method.
+     *
+     * @const string
+     */
     const GET = 'GET';
 
-    /** @var string The API post method */
+    /**
+     * The API post method.
+     *
+     * @const string
+     */
     const POST = 'POST';
 
-    /** @var string The API put method */
+    /**
+     * The API put method.
+     *
+     * @const string
+     */
     const PUT = 'PUT';
 
-    /** @var string The URL to bill form */
+    /**
+     * The URL to bill form.
+     *
+     * @const string
+     */
     const CREATE_URI = 'https://oplata.qiwi.com/create';
 
-    /** @var string The URL to API */
+    /**
+     * The URL to API.
+     *
+     * @const string
+     */
     const BILLS_URI = 'https://api.qiwi.com/partner/bill/v1/bills/';
 
-
-    /** @var string The secret key */
+    /**
+     * The secret key.
+     *
+     * @var string
+     */
     protected $secretKey;
 
-    /** @var Curl The request */
+    /**
+     * The request.
+     *
+     * @var Curl
+     */
     protected $internalCurl;
 
-    /** @var array The dictionary of request options */
+    /**
+     * The dictionary of request options.
+     *
+     * @var array
+     */
     protected $options;
 
 
     /**
      * BillPayments constructor.
      *
-     * @param string $key The secret key
-     * @param array $options The dictionary of request options
-     * @throws \ErrorException Throw on Curl extension missed
+     * @param string $key     The secret key.
+     * @param array  $options The dictionary of request options.
+     *
+     * @throws \ErrorException Throw on Curl extension missed.
      */
-    public function __construct($key = '', array $options = [])
+    public function __construct($key='', array $options=[])
     {
-        $this->secretKey = (string) $key;
-        $this->options = $options;
+        $this->secretKey    = (string) $key;
+        $this->options      = $options;
         $this->internalCurl = new Curl();
-    }
+
+    }//end __construct()
+
 
     /**
      * Setter.
      *
-     * @param string $name The property name
-     * @param mixed $value The property value
-     * @throws Exception Throw on unexpected property set
+     * @param string $name  The property name.
+     * @param mixed  $value The property value.
+     *
+     * @return void
+     *
+     * @throws Exception Throw on unexpected property set.
      */
     public function __set($name, $value)
     {
         switch ($name) {
-            case 'key':
-                $this->secretKey = (string)$value;
-                break;
-            case 'curl':
-                throw new Exception("Not acceptable property {$name}");
-            default:
-                throw new Exception("Undefined property {$name}");
+        case 'key':
+            $this->secretKey = (string) $value;
+            break;
+        case 'curl':
+            throw new Exception('Not acceptable property '.$name.'.');
+        default:
+            throw new Exception('Undefined property '.$name.'.');
         }
-    }
+
+    }//end __set()
+
 
     /**
      * Getter.
      *
-     * @param string $name The property name
-     * @return mixed The property value
-     * @throws Exception Throw on unexpected property get
+     * @param string $name The property name.
+     *
+     * @return mixed The property value.
+     *
+     * @throws Exception Throw on unexpected property get.
      */
     public function __get($name)
     {
-		switch ($name) {
-			case 'key':
-				throw new Exception("Not acceptable property {$name}");
-			case 'curl':
-				return $this->internalCurl;
-			default:
-				throw new Exception("Undefined property {$name}");
-		}
-    }
+        switch ($name) {
+        case 'key':
+            throw new Exception('Not acceptable property '.$name.'.');
+        case 'curl':
+            return $this->internalCurl;
+        default:
+            throw new Exception('Undefined property '.$name.'.');
+        }
+
+    }//end __get()
+
 
     /**
      * Checker.
      *
-     * @param string $name The property name
-     * @return bool Property set or not
-     * @throws Exception Throw on unexpected property check
+     * @param string $name The property name.
+     *
+     * @return bool Property set or not.
+     *
+     * @throws Exception Throw on unexpected property check.
      */
     public function __isset($name)
     {
-		switch ($name) {
-			case 'key':
-				return !empty($this->secretKey);
-			case 'curl':
-				return !empty($this->internalCurl);
-			default:
-				throw new Exception("Undefined property {$name}");
-		}
-    }
+        switch ($name) {
+        case 'key':
+            return !empty($this->secretKey);
+        case 'curl':
+            return !empty($this->internalCurl);
+        default:
+            return false;
+        }
+
+    }//end __isset()
 
 
     /**
      * Checks notification data signature.
      *
-     * @param string $signature The signature
-     * @param object|array $notificationBody The notification body
-     * @param string $merchantSecret The merchant key for validating signature
-     * @return bool Signature is valid or not
+     * @param string       $signature        The signature.
+     * @param object|array $notificationBody The notification body.
+     * @param string       $merchantSecret   The merchant key for validating signature.
+     *
+     * @return bool Signature is valid or not.
      */
-    public function checkNotificationSignature($signature, $notificationBody, $merchantSecret)
+    public function checkNotificationSignature($signature, array $notificationBody, $merchantSecret)
     {
+        // Preset required fields.
+        $notificationBody = array_replace_recursive(
+            [
+                'bill' => [
+                    'billId' => null,
+                    'amount' => [
+                        'value'    => null,
+                        'currency' => null,
+                    ],
+                    'siteId' => null,
+                    'status' => ['value' => null],
+                ],
+            ],
+            $notificationBody
+        );
+
         $processedNotificationData = [
-            'billId' => (string) isset($notificationBody['bill']['billId'])
-                ? $notificationBody['bill']['billId']
-                : '',
-            'amount.value' => (string) isset($notificationBody['bill']['amount']['value'])
-                ? $this->normalizeAmount($notificationBody['bill']['amount']['value'])
-                : 0,
-            'amount.currency' => (string) isset($notificationBody['bill']['amount']['currency'])
-                ? $notificationBody['bill']['amount']['currency']
-                : '',
-            'siteId' => (string) isset($notificationBody['bill']['siteId'])
-                ? $notificationBody['bill']['siteId']
-                : '',
-            'status' => (string) isset($notificationBody['bill']['status']['value'])
-                ? $notificationBody['bill']['status']['value']
-                : ''
+            'billId'          => (string) $notificationBody['bill']['billId'],
+            'amount.value'    => $this->normalizeAmount($notificationBody['bill']['amount']['value']),
+            'amount.currency' => (string) $notificationBody['bill']['amount']['currency'],
+            'siteId'          => (string) $notificationBody['bill']['siteId'],
+            'status'          => (string) $notificationBody['bill']['status']['value'],
         ];
         ksort($processedNotificationData);
         $processedNotificationDataKeys = join(self::VALUE_SEPARATOR, $processedNotificationData);
         $hash = hash_hmac(self::DEFAULT_ALGORITHM, $processedNotificationDataKeys, $merchantSecret);
+
         return $hash === $signature;
-    }
+
+    }//end checkNotificationSignature()
+
 
     /**
      * Generate lifetime in format.
      *
-     * @param int $days Days of lifetime
-     * @return string Lifetime in ISO8601
+     * @param int $days Days of lifetime.
+     *
+     * @return string Lifetime in ISO8601.
      */
-    public function getLifetimeByDay($days = 45)
+    public function getLifetimeByDay($days=45)
     {
-        $date = new DateTime('NOW');
-        return $this->normalizeDate($date->modify("+{$days} days"));
-    }
+        return $this->normalizeDate(date_modify(date_create(), '+'.min(1, $days).' days'));
+
+    }//end getLifetimeByDay()
+
 
     /**
      * Normalize date in api format.
      *
-     * @param DateTime $date Date object
-     * @return string Date in api format
+     * @param /DateTime $date Date object.
+     *
+     * @return string Date in api format.
      */
     public function normalizeDate($date)
     {
-        return $date->format(DateTime::W3C);
-    }
+        return date_format($date, self::DATETIME_FORMAT);
+
+    }//end normalizeDate()
+
 
     /**
      * Normalize amount.
      *
-     * @param string|float|int $amount The value
-     * @return string The API value
+     * @param string|float|int $amount The value.
+     *
+     * @return string The API value.
      */
-    public function normalizeAmount($amount = 0)
+    public function normalizeAmount($amount=0)
     {
         return number_format(round(floatval($amount), 2, PHP_ROUND_HALF_DOWN), 2, '.', '');
-    }
+
+    }//end normalizeAmount()
+
 
     /**
      * Generate id.
      *
-     * @return string Return uuid v4
-     * @throws Exception Trow on uuid4 algorithm break
+     * @return string Return uuid v4.
+     *
+     * @throws Exception Trow on uuid4 algorithm break.
      */
     public function generateId()
     {
         return Uuid::uuid4()->toString();
-    }
+
+    }//end generateId()
+
 
     /**
      * Get pay URL witch success URL param.
      *
-     * @param array $bill The bill
-     * @param string $successUrl The success URL
+     * @param array  $bill       The bill data:
+     *                           + payUrl {string} Payment URL.
+     * @param string $successUrl The success URL.
+     *
      * @return string
      */
-    public function getPayUrl($bill, $successUrl)
+    public function getPayUrl(array $bill, $successUrl)
     {
-        $payUrl = parse_url($bill['payUrl']);
-        if (array_key_exists('query', $payUrl)) {
+        // Preset required fields.
+        $bill = array_replace(
+            ['payUrl' => null],
+            $bill
+        );
+
+        $payUrl = parse_url((string) $bill['payUrl']);
+        if (true === array_key_exists('query', $payUrl)) {
             parse_str($payUrl['query'], $query);
             $query['successUrl'] = $successUrl;
         } else {
-            $query = [
-                'successUrl' => $successUrl
-            ];
+            $query = ['successUrl' => $successUrl];
         }
+
         $payUrl['query'] = http_build_query($query, '', '&', PHP_QUERY_RFC3986);
+
         return $this->buildUrl($payUrl);
-    }
+
+    }//end getPayUrl()
+
 
     /**
      * Creating checkout link.
      *
-     * @param array $params The parameters
-     *   ['billId']     string|number The bill identifier
-     *   ['publicKey']  string        The publicKey
-     *   ['amount']     string|number The amount
-     *   ['successUrl'] string        The success url
+     * @param array $params The parameters:
+     *                      + billId     {string|number} - The bill identifier;
+     *                      + publicKey  {string}        - The publicKey;
+     *                      + amount     {string|number} - The amount;
+     *                      + successUrl {string}        - The success url.
+     *
      * @return string Return result
      */
-    public function createPaymentForm($params)
+    public function createPaymentForm(array $params)
     {
-        $params['amount'] = isset($params['amount']) ? $this->normalizeAmount($params['amount']) : null;
-        $params['customFields'] = isset($params['customFields']) ? $params['customFields'] : [];
-        $params['customFields']['apiClient'] = CLIENT_NAME;
+        $params = array_replace_recursive(
+            [
+                'billId'       => null,
+                'publicKey'    => null,
+                'amount'       => null,
+                'successUrl'   => null,
+                'customFields' => [],
+            ],
+            $params
+        );
+
+        $params['amount'] = $this->normalizeAmount($params['amount']);
+        $params['customFields']['apiClient']        = CLIENT_NAME;
         $params['customFields']['apiClientVersion'] = CLIENT_VERSION;
-        return self::CREATE_URI . '?' . http_build_query($params, '', '&', PHP_QUERY_RFC3986);
-    }
+
+        return self::CREATE_URI.'?'.http_build_query($params, '', '&', PHP_QUERY_RFC3986);
+
+    }//end createPaymentForm()
+
 
     /**
      * Creating bill.
      *
-     * @param string|number $billId The bill identifier
-     * @param array $params The parameters
-     *   ['amount']             string|number The amount
-     *   ['currency']           string        The currency
-     *   ['comment']            string        The bill comment
-     *   ['expirationDateTime'] string        The bill expiration datetime (ISOstring)
-     *   ['extra']              array         The bill custom fields
-     *   ['extra']              array         The bill custom fields (deprecated, will be removed soon)
-     *   ['phone']              array         The phone
-     *   ['email']              string        The email
-     *   ['account']            string        The account
-     *   ['successUrl']         string        The success url
-     * @return array Return result
-     * @throws BillPaymentsException Throw on API return invalid response
+     * @param string|number $billId The bill identifier.
+     * @param array         $params The parameters:
+     *                              + amount             {string|number} The amount;
+     *                              + currency           {string}        The currency;
+     *                              + comment            {string}        The bill comment;
+     *                              + expirationDateTime {string}        The bill expiration datetime (ISOstring);
+     *                              + phone              {string}        The phone;
+     *                              + email              {string}        The email;
+     *                              + account            {string}        The account;
+     *                              + successUrl         {string}        The success url;
+     *                              + customFields       {array}         The bill custom fields.
+     *
+     * @return array Return result.
+     *
+     * @throws BillPaymentsException Throw on API return invalid response.
      */
-    public function createBill($billId, $params)
+    public function createBill($billId, array $params)
     {
-        $bill = $this->requestBuilder($billId, self::PUT, array_filter([
-            'amount' => array_filter([
-                'currency' => isset($params['currency']) ? $params['currency'] : null,
-                'value' => isset($params['amount']) ? $this->normalizeAmount($params['amount']) : null
-            ]),
-            'comment' => isset($params['comment']) ? $params['comment'] : null,
-            'expirationDateTime' => isset($params['expirationDateTime']) ? $params['expirationDateTime'] : null,
-            'customer' => array_filter([
-                'phone' => isset($params['phone']) ? $params['phone'] : null,
-                'email' => isset($params['email']) ? $params['email'] : null,
-                'account' => isset($params['account']) ? $params['account'] : null,
-            ]),
-            'customFields' => array_merge_recursive(
-                isset($params['extra']) ? $params['extra'] : [], // extra is deprecated, will be removed in next minor update
-                isset($params['customFields']) ? $params['customFields'] : [],
-                [
-                    'apiClient' => CLIENT_NAME,
+        $params = array_replace_recursive(
+            [
+                'amount'             => null,
+                'currency'           => null,
+                'comment'            => null,
+                'expirationDateTime' => null,
+                'phone'              => null,
+                'email'              => null,
+                'account'            => null,
+                'successUrl'         => null,
+                'customFields'       => [
+                    'apiClient'        => CLIENT_NAME,
                     'apiClientVersion' => CLIENT_VERSION,
+                ],
+            ],
+            $params
+        );
+
+        $bill = $this->requestBuilder(
+            $billId,
+            self::PUT,
+            array_filter(
+                [
+                    'amount'             => array_filter(
+                        [
+                            'currency' => (string) $params['currency'],
+                            'value'    => $this->normalizeAmount($params['amount']),
+                        ]
+                    ),
+                    'comment'            => (string) $params['comment'],
+                    'expirationDateTime' => (string) $params['expirationDateTime'],
+                    'customer'           => array_filter(
+                        [
+                            'phone'   => (string) $params['phone'],
+                            'email'   => (string) $params['email'],
+                            'account' => (string) $params['account'],
+                        ]
+                    ),
+                    'customFields'       => array_filter($params['customFields']),
                 ]
-            ),
-        ]));
-        if (!empty($bill['payUrl']) && !empty($params['successUrl'])) {
+            )
+        );
+        if (false === empty($bill['payUrl']) && false === empty($params['successUrl'])) {
             $bill['payUrl'] = $this->getPayUrl($bill, $params['successUrl']);
         }
+
         return $bill;
-    }
+
+    }//end createBill()
+
 
     /**
      * Getting bill info.
      *
-     * @param string|number $billId The bill identifier
-     * @return array Return result
-     * @throws BillPaymentsException Throw on API return invalid response
+     * @param string|number $billId The bill identifier.
+     *
+     * @return array Return result.
+     *
+     * @throws BillPaymentsException Throw on API return invalid response.
      */
     public function getBillInfo($billId)
     {
         return $this->requestBuilder($billId);
-    }
+
+    }//end getBillInfo()
+
 
     /**
      * Cancelling unpaid bill.
      *
-     * @param string|number $billId The bill identifier
-     * @return array Return result
-     * @throws BillPaymentsException Throw on API return invalid response
+     * @param string|number $billId The bill identifier.
+     *
+     * @return array Return result.
+     *
+     * @throws BillPaymentsException Throw on API return invalid response.
      */
     public function cancelBill($billId)
     {
-        return $this->requestBuilder("${billId}/reject", self::POST);
-    }
+        return $this->requestBuilder($billId.'/reject', self::POST);
+
+    }//end cancelBill()
+
 
     /**
      * Refund paid bill.
      *
-     * @param string|number $billId The bill identifier
-     * @param string|number $refundId The refund identifier
-     * @param string|number $amount The amount
-     * @param string $currency The currency
-     * @return array|bool Return result
-     * @throws BillPaymentsException  Throw on API return invalid response
+     * @param string|number $billId   The bill identifier.
+     * @param string|number $refundId The refund identifier.
+     * @param string|number $amount   The amount.
+     * @param string        $currency The currency.
+     *
+     * @return array|bool Return result.
+     *
+     * @throws BillPaymentsException Throw on API return invalid response.
      */
-    public function refund($billId, $refundId, $amount = '0', $currency = 'RUB')
+    public function refund($billId, $refundId, $amount='0', $currency='RUB')
     {
-        return $this->requestBuilder("${billId}/refunds/${refundId}", self::PUT, [
-            'amount' => [
-                'currency' => $currency,
-                'value' => $this->normalizeAmount($amount)
+        return $this->requestBuilder(
+            $billId.'/refunds/'.$refundId,
+            self::PUT,
+            [
+                'amount' => [
+                    'currency' => (string) $currency,
+                    'value'    => $this->normalizeAmount($amount),
+                ],
             ]
-        ]);
-    }
+        );
+
+    }//end refund()
+
 
     /**
      * Getting refund info.
      *
-     * @param string|number $billId The bill identifier
-     * @param string|number $refundId The refund identifier
-     * @return array Return result
-     * @throws BillPaymentsException  Throw on API return invalid response
+     * @param string|number $billId   The bill identifier.
+     * @param string|number $refundId The refund identifier.
+     *
+     * @return array Return result.
+     *
+     * @throws BillPaymentsException  Throw on API return invalid response.
      */
     public function getRefundInfo($billId, $refundId)
     {
-        return $this->requestBuilder("${billId}/refunds/${refundId}");
-    }
+        return $this->requestBuilder($billId.'/refunds/'.$refundId);
+
+    }//end getRefundInfo()
 
 
     /**
      * Build request.
      *
-     * @param string $uri The url
-     * @param string $method The method
-     * @param array $body The body
-     * @return bool|array Return response
-     * @throws Exception Throw on unsupported $method use
-     * @throws BillPaymentsException Throw on API return invalid response
+     * @param string $uri    The url.
+     * @param string $method The method.
+     * @param array  $body   The body.
+     *
+     * @return bool|array Return response.
+     *
+     * @throws Exception Throw on unsupported $method use.
+     * @throws BillPaymentsException Throw on API return invalid response.
      */
-    protected function requestBuilder($uri, $method = self::GET, array $body = array())
+    protected function requestBuilder($uri, $method=self::GET, array $body=[])
     {
         $this->internalCurl->reset();
         foreach ($this->options as $option => $value) {
             $this->internalCurl->setOpt($option, $value);
         }
-        $url = self::BILLS_URI . $uri;
+
+        $url = self::BILLS_URI.$uri;
         $this->internalCurl->setHeader('Accept', 'application/json');
-        $this->internalCurl->setHeader('Authorization', "Bearer {$this->secretKey}");
+        $this->internalCurl->setHeader('Authorization', 'Bearer '.$this->secretKey);
         switch ($method) {
-            case self::GET:
-                $this->internalCurl->get($url);
-                break;
-            case self::POST:
-                $this->internalCurl->setHeader('Content-Type', 'application/json;charset=UTF-8');
-                $this->internalCurl->post($url, json_encode($body, JSON_UNESCAPED_UNICODE));
-                break;
-            case self::PUT:
-                $this->internalCurl->setHeader('Content-Type', 'application/json;charset=UTF-8');
-                $this->internalCurl->put($url, json_encode($body, JSON_UNESCAPED_UNICODE), true);
-                break;
-            default:
-                throw new Exception("Not supported method {$method}.");
+        case self::GET:
+            $this->internalCurl->get($url);
+            break;
+        case self::POST:
+            $this->internalCurl->setHeader('Content-Type', 'application/json;charset=UTF-8');
+            $this->internalCurl->post($url, json_encode($body, JSON_UNESCAPED_UNICODE));
+            break;
+        case self::PUT:
+            $this->internalCurl->setHeader('Content-Type', 'application/json;charset=UTF-8');
+            $this->internalCurl->put($url, json_encode($body, JSON_UNESCAPED_UNICODE), true);
+            break;
+        default:
+            throw new Exception('Not supported method '.$method.'.');
         }
-        if ($this->internalCurl->error) {
+
+        if (true === $this->internalCurl->error) {
             throw new BillPaymentsException(clone $this->internalCurl);
         }
-        return empty($this->internalCurl->response) ? true : json_decode($this->internalCurl->response, true);
-    }
+
+        if (false === empty($this->internalCurl->response)) {
+            return @json_decode($this->internalCurl->response, true);
+        }
+
+        return true;
+
+    }//end requestBuilder()
+
 
     /**
      * Build URL.
      *
-     * @param array $parsedUrl The parsed URL
+     * @param array $parsedUrl The parsed URL.
+     *
      * @return string
      */
-    protected function buildUrl($parsedUrl)
+    protected function buildUrl(array $parsedUrl)
     {
-        $scheme   = isset($parsedUrl['scheme']) ? $parsedUrl['scheme'] . '://' : '';
-        $host     = isset($parsedUrl['host']) ? $parsedUrl['host'] : '';
-        $port     = isset($parsedUrl['port']) ? ':' . $parsedUrl['port'] : '';
-        $user     = isset($parsedUrl['user']) ? $parsedUrl['user'] : '';
-        $pass     = isset($parsedUrl['pass']) ? ':' . $parsedUrl['pass']  : '';
-        $pass     = ($user || $pass) ? "$pass@" : '';
-        $path     = isset($parsedUrl['path']) ? $parsedUrl['path'] : '';
-        $query    = isset($parsedUrl['query']) ? '?' . $parsedUrl['query'] : '';
-        $fragment = isset($parsedUrl['fragment']) ? '#' . $parsedUrl['fragment'] : '';
-        return $scheme . $user . $pass . $host . $port . $path . $query . $fragment;
-    }
-}
+        if (true === isset($parsedUrl['scheme'])) {
+            $scheme = $parsedUrl['scheme'].'://';
+        } else {
+            $scheme = '';
+        }
+
+        if (true === isset($parsedUrl['host'])) {
+            $host = $parsedUrl['host'];
+        } else {
+            $host = '';
+        }
+
+        if (true === isset($parsedUrl['port'])) {
+            $port = ':'.$parsedUrl['port'];
+        } else {
+            $port = '';
+        }
+
+        if (true === isset($parsedUrl['user'])) {
+            $user = (string) $parsedUrl['user'];
+        } else {
+            $user = '';
+        }
+
+        if (true === isset($parsedUrl['pass'])) {
+            $pass = ':'.$parsedUrl['pass'];
+        } else {
+            $pass = '';
+        }
+
+        if (false === empty($user) || false === empty($pass)) {
+            $host = '@'.$host;
+        }
+
+        if (true === isset($parsedUrl['path'])) {
+            $path = (string) $parsedUrl['path'];
+        } else {
+            $path = '';
+        }
+
+        if (true === isset($parsedUrl['query'])) {
+            $query = '?'.$parsedUrl['query'];
+        } else {
+            $query = '';
+        }
+
+        if (true === isset($parsedUrl['fragment'])) {
+            $fragment = '#'.$parsedUrl['fragment'];
+        } else {
+            $fragment = '';
+        }
+
+        return $scheme.$user.$pass.$host.$port.$path.$query.$fragment;
+
+    }//end buildUrl()
+
+
+}//end class
