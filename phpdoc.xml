@@ -2,7 +2,7 @@
 <phpdoc>
     <title>Universal payments API PHP SDK</title>
     <parser>
-        <target>docs</target>
+        <target>build</target>
         <markers>
             <item>TODO</item>
             <item>FIXME</item>
@@ -17,5 +17,6 @@
     </transformer>
     <files>
         <directory>src</directory>
+        <ignore>test/*</ignore>
     </files>
 </phpdoc>
