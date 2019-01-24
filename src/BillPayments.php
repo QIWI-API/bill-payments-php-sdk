@@ -13,6 +13,7 @@ namespace Qiwi\Api;
 use Curl\Curl;
 use Ramsey\Uuid\Uuid;
 use Exception;
+use DateTime;
 
 if (false === defined('CLIENT_NAME')) {
     //phpcs:disable Squiz.Commenting -- Because contingent constant definition.
@@ -274,10 +275,13 @@ class BillPayments
      * @param int $days Days of lifetime.
      *
      * @return string Lifetime in ISO8601.
+     *
+     * @throws Exception
      */
     public function getLifetimeByDay($days=45)
     {
-        return $this->normalizeDate(date_modify(date_create(), '+'.min(1, $days).' days'));
+        $dateTime = new DateTime();
+        return $this->normalizeDate($dateTime->modify('+'.max(1, $days).' days'));
 
     }//end getLifetimeByDay()
 
@@ -285,13 +289,13 @@ class BillPayments
     /**
      * Normalize date in api format.
      *
-     * @param /DateTime $date Date object.
+     * @param DateTime $date Date object.
      *
      * @return string Date in api format.
      */
     public function normalizeDate($date)
     {
-        return date_format($date, self::DATETIME_FORMAT);
+        return $date->format(self::DATETIME_FORMAT);
 
     }//end normalizeDate()
 

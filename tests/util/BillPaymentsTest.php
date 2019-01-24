@@ -39,7 +39,7 @@ class BillPaymentsTest extends TestCase
      */
     protected function setMock($method, array $state=[])
     {
-        $mock = $this->getMock(Curl::class);
+        $mock = $this->createMock(Curl::class);
         $mock->expects($this->once())->method($method)->willReturnCallback(
             function () use ($state) {
                 foreach ($state as $key => $value) {
@@ -295,6 +295,8 @@ class BillPaymentsTest extends TestCase
      * Get life time.
      *
      * @return void
+     *
+     * @throws Exception
      */
     public function testGetLifetimeByDay()
     {
