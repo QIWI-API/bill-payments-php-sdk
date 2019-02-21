@@ -16,7 +16,7 @@ $ composer require qiwi/bill-payments-php-sdk
 
 ## Документация
 
-**Универсальный платежный API**: https://developer.qiwi.com/ru/bill-payments
+**API QIWI Касса**: https://developer.qiwi.com/ru/bill-payments
 
 Генерация авто-документации `composer run docs`.
 
