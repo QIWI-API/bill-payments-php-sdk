@@ -100,7 +100,7 @@ $fields = [
   'expirationDateTime' => '2018-03-02T08:44:07',
   'email' => 'example@mail.org',
   'account' => 'client4563',
-  'sucessUrl' => 'http://test.ru/',
+  'successUrl' => 'http://test.ru/',
 ];
 
 /** @var \Qiwi\Api\BillPayments $billPayments */
