@@ -97,11 +97,10 @@ $fields = [
   'amount' => 1.00,
   'currency' => 'RUB',
   'comment' => 'test',
-  'expirationDateTime' => '2018-03-02T08:44:07',
+  'expirationDateTime' => '2018-03-02T08:44:07+03:00',
   'email' => 'example@mail.org',
   'account' => 'client4563',
-  'successUrl' => 'http://test.ru/',
-];
+  ];
 
 /** @var \Qiwi\Api\BillPayments $billPayments */
 $response = $billPayments->createBill($billId, $fields);
