@@ -8,7 +8,7 @@ PHP SDK модуль для внедрения единого платежног
 
 ## Установка и подключение
 
-Установка с помощью npm:
+Установка с помощью composer:
 
 ```bash
 $ composer require qiwi/bill-payments-php-sdk
