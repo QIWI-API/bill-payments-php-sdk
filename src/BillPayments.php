@@ -581,11 +581,31 @@ class BillPayments
         }
 
         if (true === $this->internalCurl->error) {
-            throw new BillPaymentsException(clone $this->internalCurl);
+            throw new BillPaymentsException(
+                clone $this->internalCurl,
+                $this->internalCurl->error_message,
+                $this->internalCurl->error_code
+            );
         }
 
         if (false === empty($this->internalCurl->response)) {
-            return @json_decode($this->internalCurl->response, true);
+            $json = json_decode($this->internalCurl->response, true);
+            if (is_null($json)) {
+                throw new BillPaymentsException(
+                    clone $this->internalCurl,
+                    json_last_error_msg(),
+                    json_last_error()
+                );
+            }
+            
+            if ($json['errorCode']) {
+                throw new BillPaymentsException(
+                    clone $this->internalCurl,
+                    isset($json['description']) ? $json['description'] : $json['errorCode']
+                );
+            }
+            
+            retirn $json;
         }
 
         return true;
