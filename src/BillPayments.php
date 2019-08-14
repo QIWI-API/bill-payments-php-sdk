@@ -598,14 +598,14 @@ class BillPayments
                 );
             }
             
-            if ($json['errorCode']) {
+            if (isset($json['errorCode'])) {
                 throw new BillPaymentsException(
                     clone $this->internalCurl,
                     isset($json['description']) ? $json['description'] : $json['errorCode']
                 );
             }
             
-            retirn $json;
+            return $json;
         }
 
         return true;
