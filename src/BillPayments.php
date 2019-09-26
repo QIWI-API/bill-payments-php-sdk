@@ -11,8 +11,8 @@
 namespace Qiwi\Api;
 
 use Curl\Curl;
-use Ramsey\Uuid\Uuid;
 use Exception;
+use ErrorException;
 use DateTime;
 
 if (false === defined('CLIENT_NAME')) {
@@ -44,7 +44,7 @@ if (false === defined('CLIENT_VERSION')) {
 }
 
 /**
- * Class for rest v 3.
+ * Class for rest v3.
  *
  * @see https://developer.qiwi.com/en/bill-payments API Documentation.
  *
@@ -66,13 +66,6 @@ class BillPayments
      * @const string
      */
     const DEFAULT_ALGORITHM = 'sha256';
-
-    /**
-     * The default hash encoding.
-     *
-     * @const string
-     */
-    const DEFAULT_ENCODING = 'hex';
 
     /**
      * The API datetime format.
@@ -144,7 +137,7 @@ class BillPayments
      * @param string $key     The secret key.
      * @param array  $options The dictionary of request options.
      *
-     * @throws \ErrorException Throw on Curl extension missed.
+     * @throws ErrorException Throw on Curl extension missed.
      */
     public function __construct($key='', array $options=[])
     {
@@ -323,7 +316,17 @@ class BillPayments
      */
     public function generateId()
     {
-        return Uuid::uuid4()->toString();
+        $hash = bin2hex(random_bytes(16));
+
+        return sprintf(
+            '%08s-%04s-%04s-%02s%02s-%012s',
+            substr($hash, 0, 8),
+            substr($hash, 8, 4),
+            str_pad(dechex(hexdec(substr($hash, 12, 4)) & 0x0fff & ~(0xf000) | 0x4000), 4, '0', STR_PAD_LEFT),
+            str_pad(dechex(hexdec(substr($hash, 16, 2)) & 0x3f & ~(0xc0) | 0x80), 2, '0', STR_PAD_LEFT),
+            substr($hash, 18, 2),
+            substr($hash, 20, 12)
+        );
 
     }//end generateId()
 
@@ -590,21 +593,18 @@ class BillPayments
 
         if (false === empty($this->internalCurl->response)) {
             $json = json_decode($this->internalCurl->response, true);
-            if (is_null($json)) {
-                throw new BillPaymentsException(
-                    clone $this->internalCurl,
-                    json_last_error_msg(),
-                    json_last_error()
-                );
+            if (null === $json) {
+                throw new BillPaymentsException(clone $this->internalCurl, json_last_error_msg(), json_last_error());
             }
-            
-            if (isset($json['errorCode'])) {
-                throw new BillPaymentsException(
-                    clone $this->internalCurl,
-                    isset($json['description']) ? $json['description'] : $json['errorCode']
-                );
+
+            if (true === isset($json['errorCode'])) {
+                if (true === isset($json['description'])) {
+                    throw new BillPaymentsException(clone $this->internalCurl, $json['description']);
+                }
+
+                throw new BillPaymentsException(clone $this->internalCurl, $json['errorCode']);
             }
-            
+
             return $json;
         }
 
