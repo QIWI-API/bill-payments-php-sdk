@@ -316,7 +316,12 @@ class BillPayments
      */
     public function generateId()
     {
-        $hash = bin2hex(random_bytes(16));
+        $bytes = '';
+        for ($i = 1; $i <= 16; $i++) {
+            $bytes .= chr(mt_rand(0, 255));
+        }
+
+        $hash = bin2hex($bytes);
 
         return sprintf(
             '%08s-%04s-%04s-%02s%02s-%012s',
