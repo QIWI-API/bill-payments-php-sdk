@@ -4,6 +4,7 @@ root: false
 env:
   global:
   - deploy=nothing
+  - update=self
   - setup=stable
   - secure: srS7ozpUYTudohNBukwS9rN6K7Heq1kQLeApfprwpJ6aCL9tQP6wtWr4AAwMnXu3uYSE4hliuE1YvR+a1+cPy1zqT0VT6vBG4v4CPGe2iy8KWmbAQEKJLk38saVjRowYb0C+yGbIUQCKuUqyOHwHqltbKl0fppOcYHSk/U0Z4ObpDflo6hI3/g8mso3OxUQNVXjMVdbPMRTIq+SaFnO42N48WvmsfKsaBuTnCSjr9jfL+IIoVDQbsgDxieuJB3AnhfSvpU7DbRXPp4OE4fmqO5vXHxGxeAQhzGbmFKmL/2w0y4FBF3khRuNa0fCKAFsG4rayLQ3Kct5dFpdK5CrwjF0/H4TIyNaOKSEIshHGiYrH9hPXS6L4wcaSsdaJB5ATDuD8lVIE+B06d5cZkUTSqbj81eb4Fp9hSx1VTpqoSCsR84CoSmNNfdC/e4HsNk5I63VJZxUl8gJ5OpmzH8+F4I/v69bJiXIwNcQYsIuKEi/PucucJDfiLsA+uBcPlfGzLGBgpLip8Dn9wmksioD3wpfkHnKxzLNmE34MtXqd8c0nKTBruAeygZB2cnKDiivHVemGB9fjslkjJH6YuwD2wjLburppK5fEHmkG+7zz4Tln9T1AC0ZyRxt235hZ0/G7n/7vSsxulvS5iQa73hf+JjOXvfOIO2jAfHbL2w2T7Wo=
 cache:
@@ -28,27 +29,16 @@ matrix:
   - php: 7.2
     env: setup=lowest
   - php: hhvm
+    env: update=none
   - php: hhvm
-    env: setup=lowest
+    env:
+      - update=none
+      - setup=lowest
 install:
-- composer self-update
+- if [[ $update = 'self' ]]; then composer self-update; fi
 - composer config -g github-oauth.github.com "$GITHUB_TOKEN"
 - if [[ $TRAVIS_PULL_REQUEST = 'false' && $TRAVIS_BRANCH = 'master' ]]; then openssl aes-256-cbc -K $encrypted_35f90653928635e2_key -iv $encrypted_35f90653928635e2_iv -in tests/config.php.enc -out tests/config.php -d; fi
 - if [[ $setup = 'stable' ]]; then composer update --prefer-dist --no-interaction --prefer-stable --no-suggest; fi
 - if [[ $setup = 'lowest' ]]; then composer update --prefer-dist --no-interaction --prefer-lowest --prefer-stable --no-suggest; fi
 script:
 - if [[ $TRAVIS_PULL_REQUEST = 'false' && $TRAVIS_BRANCH = 'master' ]]; then composer run test; else composer run util ; fi
-defore_deploy:
-- composer run code
-deploy:
-  provider: pages
-  skip-cleanup: true
-  github-token: $GITHUB_TOKEN
-  keep-history: true
-  local-dir: docs
-  on:
-    condition: $deploy = pages
-    tags: true
-    branches:
-      only:
-        - master
