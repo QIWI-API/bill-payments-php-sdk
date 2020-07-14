@@ -507,6 +507,7 @@ class BillPayments
 
     /**
      * Refund paid bill.
+     * Method is not available for individuals.
      *
      * @param string|number $billId   The bill identifier.
      * @param string|number $refundId The refund identifier.
@@ -535,6 +536,7 @@ class BillPayments
 
     /**
      * Getting refund info.
+     * Method is not available for individuals.
      *
      * @param string|number $billId   The bill identifier.
      * @param string|number $refundId The refund identifier.
