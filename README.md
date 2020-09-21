@@ -66,7 +66,7 @@ $publicKey = '2tbp1WQvsgQeziGY9vTLe9vDZNg7tmCymb4Lh6STQokqKrpCC6qrUUKEDZAJ7mvFnz
 $params = [
   'publicKey' => $publicKey,
   'amount' => 200,
-  'billId' => '893794793973',
+  'billId' => 'cc961e8d-d4d6-4f02-b737-2297e51fb48e',
   'successUrl' => 'http://test.ru/',
 ];
 
@@ -81,7 +81,7 @@ echo $link;
 Вывод:
 
 ```
-https://oplata.qiwi.com/create?publicKey=2tbp1WQvsgQeziGY9vTLe9vDZNg7tmCymb4Lh6STQokqKrpCC6qrUUKEDZAJ7mvFnzr1yTebUiQaBLDnebLMMxL8nc6FF5zfmGQnypdXCbQJqHEJW5RJmKfj8nvgc&amount=200&billId=893794793973&successUrl=http%3A%2F%2Ftest.ru%2F
+https://oplata.qiwi.com/create?publicKey=2tbp1WQvsgQeziGY9vTLe9vDZNg7tmCymb4Lh6STQokqKrpCC6qrUUKEDZAJ7mvFnzr1yTebUiQaBLDnebLMMxL8nc6FF5zfmGQnypdXCbQJqHEJW5RJmKfj8nvgc&amount=200&billId=cc961e8d-d4d6-4f02-b737-2297e51fb48e&successUrl=http%3A%2F%2Ftest.ru%2F
 ```
 
 ### Выставление счета
@@ -93,7 +93,7 @@ https://oplata.qiwi.com/create?publicKey=2tbp1WQvsgQeziGY9vTLe9vDZNg7tmCymb4Lh6S
 ```php
 <?php
 
-$billId = '893794793973';
+$billId = 'cc961e8d-d4d6-4f02-b737-2297e51fb48e';
 $fields = [
   'amount' => 1.00,
   'currency' => 'RUB',
@@ -133,7 +133,7 @@ Array
     [comment] => test
     [creationDateTime] => 2018-07-12T10:28:38.855+03:00
     [expirationDateTime] => 2018-08-26T10:28:38.855+03:00
-    [payUrl] => https://oplata.qiwi.com/form/?invoice_uid=bb773791-9bd9-42c1-b8fc-3358cd108422&successUrl=http%3A%2F%2Ftest.ru%2F
+    [payUrl] => https://oplata.qiwi.com/form/?invoice_uid=cc961e8d-d4d6-4f02-b737-2297e51fb48e&successUrl=http%3A%2F%2Ftest.ru%2F
 )
 ```
 
@@ -144,7 +144,7 @@ Array
 ```php
 <?php
 
-$billId = '893794793973';
+$billId = 'cc961e8d-d4d6-4f02-b737-2297e51fb48e';
 
 /** @var \Qiwi\Api\BillPayments $billPayments */
 $response = $billPayments->getBillInfo($billId);
@@ -160,7 +160,7 @@ print_r($response);
 Array
 (
     [siteId] => 270305
-    [billId] => 4fa5cb2a-942e-4e67-b552-ff10c71d6f8d
+    [billId] => cc961e8d-d4d6-4f02-b737-2297e51fb48e
     [amount] => Array
         (
             [currency] => RUB
@@ -176,7 +176,7 @@ Array
     [comment] => test
     [creationDateTime] => 2018-07-12T10:31:06.846+03:00
     [expirationDateTime] => 2018-08-26T10:31:06.846+03:00
-    [payUrl] => https://oplata.qiwi.com/form/?invoice_uid=ee3ad91d-cfb8-4dbf-8449-b6859fdfec3c
+    [payUrl] => https://oplata.qiwi.com/form/?invoice_uid=cc961e8d-d4d6-4f02-b737-2297e51fb48e
 )
 ```
 
@@ -187,7 +187,7 @@ Array
 ```php
 <?php
 
-$billId = '893794793973';
+$billId = 'cc961e8d-d4d6-4f02-b737-2297e51fb48e';
 
 /** @var \Qiwi\Api\BillPayments $billPayments */
 $response = $billPayments->cancelBill($billId);
@@ -203,7 +203,7 @@ print_r($response);
 Array
 (
     [siteId] => 270305
-    [billId] => 60418b7e-1e95-4ac0-936e-0b98d7a7fdae
+    [billId] => cc961e8d-d4d6-4f02-b737-2297e51fb48e
     [amount] => Array
         (
             [currency] => RUB
@@ -219,7 +219,7 @@ Array
     [comment] => test
     [creationDateTime] => 2018-07-12T10:32:17.481+03:00
     [expirationDateTime] => 2018-08-26T10:32:17.481+03:00
-    [payUrl] => https://oplata.qiwi.com/form/?invoice_uid=a3fe62b2-9962-4d9d-9025-0766fb492546
+    [payUrl] => https://oplata.qiwi.com/form/?invoice_uid=cc961e8d-d4d6-4f02-b737-2297e51fb48e
 )
 ```
 
@@ -231,7 +231,7 @@ Array
 ```php
 <?php
 
-$billId = '893794793973';
+$billId = 'cc961e8d-d4d6-4f02-b737-2297e51fb48e';
 $refundId = '899343443';
 $amount = 12;
 $currency = 'RUB';
@@ -268,7 +268,7 @@ Array
 ```php
 <?php
 
-$billId = '893794793973';
+$billId = 'cc961e8d-d4d6-4f02-b737-2297e51fb48e';
 $refundId = '899343443';
 
 /** @var \Qiwi\Api\BillPayments $billPayments */
@@ -343,17 +343,17 @@ $validSignatureFromNotificationServer = '07e0ebb10916d97760c196034105d010607a6c6
 $notificationData = [
   'bill' => [
     'siteId' => 'test',
-    'billId' => 'test_bill',
+    'billId' => 'cc961e8d-d4d6-4f02-b737-2297e51fb48e',
     'amount' => ['value' => 1, 'currency' => 'RUB'],
     'status' => ['value' => 'PAID']
   ],
   'version' => '3'
 ];
-$merchantSecret = 'test-merchant-secret-for-signature-check';
+$secretKey = 'eyJ2ZXJzaW9uIjoicmVzdF92MyIsImRhdGEiOnsibWVyY2hhbnRfaWQiOjUyNjgxMiwiYXBpX3VzZXJfaWQiOjcxNjI2MTk3LCJzZWNyZXQiOiJmZjBiZmJiM2UxYzc0MjY3YjIyZDIzOGYzMDBkNDhlYjhiNTnONPININONPN090MTg5Z**********************';
 
 /** @var \Qiwi\Api\BillPayments $billPayments */
 $billPayments->checkNotificationSignature(
-  $validSignatureFromNotificationServer, $notificationData, $merchantSecret
+  $validSignatureFromNotificationServer, $notificationData, $secretKey
 ); // true
 
 ?>
