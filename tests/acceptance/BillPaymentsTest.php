@@ -10,7 +10,6 @@
 namespace Qiwi\Api\Acceptance;
 
 use Qiwi\Api\TestCase;
-use Qiwi\Api\BillPayments;
 
 /**
  * Acceptance test case witch real API.

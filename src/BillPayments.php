@@ -10,7 +10,6 @@
 
 namespace Qiwi\Api;
 
-use Curl\Curl;
 use Exception;
 use ErrorException;
 use DateTime;
@@ -48,8 +47,8 @@ if (false === defined('CLIENT_VERSION')) {
  *
  * @see https://developer.qiwi.com/en/bill-payments API Documentation.
  *
- * @property string $key  The secret key is set-only.
- * @property Curl   $curl The request is get-only.
+ * @property string   $key  The secret key is set-only.
+ * @property resource $curl The request is get-only.
  */
 class BillPayments
 {
@@ -119,16 +118,9 @@ class BillPayments
     /**
      * The request.
      *
-     * @var Curl
+     * @var resource
      */
     protected $internalCurl;
-
-    /**
-     * The dictionary of request options.
-     *
-     * @var array
-     */
-    protected $options;
 
 
     /**
@@ -142,8 +134,16 @@ class BillPayments
     public function __construct($key='', array $options=[])
     {
         $this->secretKey    = (string) $key;
-        $this->options      = $options;
-        $this->internalCurl = new Curl();
+        $this->internalCurl = curl_init();
+        curl_setopt_array(
+            $this->internalCurl,
+            array_merge(
+                [
+                    CURLOPT_USERAGENT => CLIENT_NAME.'-'.CLIENT_VERSION,
+                ],
+                $options
+            )
+        );
 
     }//end __construct()
 
@@ -566,50 +566,55 @@ class BillPayments
      */
     protected function requestBuilder($uri, $method=self::GET, array $body=[])
     {
-        $this->internalCurl->reset();
-        foreach ($this->options as $option => $value) {
-            $this->internalCurl->setOpt($option, $value);
-        }
-
-        $url = self::BILLS_URI.$uri;
-        $this->internalCurl->setHeader('Accept', 'application/json');
-        $this->internalCurl->setHeader('Authorization', 'Bearer '.$this->secretKey);
-        switch ($method) {
-        case self::GET:
-            $this->internalCurl->get($url);
-            break;
-        case self::POST:
-            $this->internalCurl->setHeader('Content-Type', 'application/json;charset=UTF-8');
-            $this->internalCurl->post($url, json_encode($body, JSON_UNESCAPED_UNICODE));
-            break;
-        case self::PUT:
-            $this->internalCurl->setHeader('Content-Type', 'application/json;charset=UTF-8');
-            $this->internalCurl->put($url, json_encode($body, JSON_UNESCAPED_UNICODE), true);
-            break;
-        default:
-            throw new Exception('Not supported method '.$method.'.');
-        }
-
-        if (true === $this->internalCurl->error) {
-            throw new BillPaymentsException(
-                clone $this->internalCurl,
-                $this->internalCurl->error_message,
-                $this->internalCurl->error_code
+        $curl    = curl_copy_handle($this->internalCurl);
+        $url     = self::BILLS_URI.$uri;
+        $body    = null;
+        $headers = array_merge(
+            curl_getinfo($curl, CURLOPT_HTTPHEADER),
+            [
+                'Accept: application/json',
+                'Authorization: Bearer '.$this->secretKey,
+            ]
+        );
+        if (true !== empty($body) && self::GET !== $method) {
+            $body    = json_encode($body, JSON_UNESCAPED_UNICODE);
+            $headers = array_combine(
+                $headers,
+                [
+                    'Content-Type: application/json;charset=UTF-8',
+                    'Content-Length: '.strlen($body),
+                ]
             );
         }
 
-        if (false === empty($this->internalCurl->response)) {
-            $json = json_decode($this->internalCurl->response, true);
+        curl_setopt_array(
+            $curl,
+            [
+                CURLOPT_URL            => $url,
+                CURLOPT_HTTPHEADER     => $headers,
+                CURLOPT_CUSTOMREQUEST  => $method,
+                CURLOPT_POSTFIELDS     => $body,
+                CURLOPT_RETURNTRANSFER => 1,
+            ]
+        );
+        $response = curl_exec($curl);
+
+        if (false === $response) {
+            throw new BillPaymentsException($curl, curl_error($curl), curl_getinfo($curl, CURLINFO_RESPONSE_CODE));
+        }
+
+        if (false === empty($response)) {
+            $json = json_decode($response, true);
             if (null === $json) {
-                throw new BillPaymentsException(clone $this->internalCurl, json_last_error_msg(), json_last_error());
+                throw new BillPaymentsException($curl, json_last_error_msg(), json_last_error());
             }
 
             if (true === isset($json['errorCode'])) {
                 if (true === isset($json['description'])) {
-                    throw new BillPaymentsException(clone $this->internalCurl, $json['description']);
+                    throw new BillPaymentsException($curl, $json['description']);
                 }
 
-                throw new BillPaymentsException(clone $this->internalCurl, $json['errorCode']);
+                throw new BillPaymentsException($curl, $json['errorCode']);
             }
 
             return $json;

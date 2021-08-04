@@ -1,7 +1,7 @@
 {
     "name": "qiwi/bill-payments-php-sdk",
     "type": "library",
-    "version": "0.1.2",
+    "version": "0.2.1",
     "description": "Universal payments API SDK",
     "license": "MIT",
     "homepage": "https://github.com/QIWI-API/bill-payments-php-sdk",
@@ -11,13 +11,13 @@
     "require": {
         "php": ">=5.6.0",
         "ext-curl": "*",
-        "ext-json": "*",
-        "curl/curl": "1.9.*"
+        "ext-json": "*"
     },
     "require-dev": {
         "phpdocumentor/phpdocumentor": "2.8.*",
         "phpunit/phpunit": "5.7.27",
-		"squizlabs/php_codesniffer" : "3.4.*"
+		"squizlabs/php_codesniffer" : "3.4.*",
+        "php-mock/php-mock-phpunit": "^1.1"
     },
 	"autoload": {
         "psr-4": {
@@ -35,5 +35,10 @@
         "test": "phpunit",
         "docs": "phpdoc",
         "wiki": "phpdocmd docs/structure.xml wiki"
+    },
+    "config": {
+        "platform": {
+            "php": "5.6.0"
+        }
     }
 }
