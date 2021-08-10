@@ -12,7 +12,6 @@ namespace Qiwi\Api\Util;
 
 use Qiwi\Api\TestCase;
 use Qiwi\Api\BillPaymentsException;
-use Curl\Curl;
 use Exception;
 
 /**
@@ -34,18 +33,19 @@ class BillPaymentsExceptionTest extends TestCase
      */
     public function testProperties()
     {
-        $billPaymentsException = new BillPaymentsException(new Curl());
+        $curl = curl_init();
+        $billPaymentsException = new BillPaymentsException($curl);
 
         $this->assertTrue(isset($billPaymentsException->curl), 'exists curl attribute');
-        $this->assertInstanceOf(Curl::class, $this->billPayments->curl, 'correct set curl attribute');
-        $this->setExpectedException(Exception::class, 'Not acceptable property curl.');
-        $billPaymentsException->curl = 'test';
+        $this->assertSame($curl, $this->billPayments->curl, 'correct set curl attribute');
+        $this->setException(Exception::class, 'Not acceptable property curl.');
+        $billPaymentsException->curl = curl_copy_handle($curl);
 
         //phpcs:disable Generic,Squiz.Commenting -- Because IDE helper doc block in line.
         /** @noinspection PhpUndefinedFieldInspection */
         $this->assertFalse(isset($billPaymentsException->qwerty), 'not exists attribute');
         //phpcs:enable Generic,Squiz.Commenting
-        $this->setExpectedException(Exception::class, 'Undefined property qwerty.');
+        $this->setException(Exception::class, 'Undefined property qwerty.');
         //phpcs:disable Generic,Squiz.Commenting -- Because IDE helper doc block in line.
         /** @noinspection PhpUndefinedFieldInspection */
         $billPaymentsException->qwerty = 'test';

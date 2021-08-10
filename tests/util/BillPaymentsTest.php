@@ -10,12 +10,11 @@
 
 namespace Qiwi\Api\Util;
 
+use Exception;
+use phpmock\phpunit\PHPMock;
 use Qiwi\Api\BillPaymentsException;
 use Qiwi\Api\TestCase;
 use Qiwi\Api\BillPayments;
-use Curl\Curl;
-use Exception;
-use ReflectionClass;
 
 /**
  * Util test case without real API.
@@ -25,37 +24,79 @@ use ReflectionClass;
  */
 class BillPaymentsTest extends TestCase
 {
+    use PHPMock;
+
+    /**
+     * CURL test instance.
+     *
+     * @var false|resource
+     */
+    protected $curl = false;
 
 
     /**
-     * Set up test case.
+     * Setup CURL functions mock.
      *
-     * @param string $method Method to call.
-     * @param array  $state  State of curl after exec.
+     * @param array        $options Expected CURL options.
+     * @param false|string $result  Result to CURL execute.
      *
      * @return void
-     *
-     * @throws \ReflectionException
      */
-    protected function setMock($method, array $state=[])
+    protected function setMockResponse(array $options, $result)
     {
-        $mock = $this->createMock(Curl::class);
-        $mock->expects($this->once())->method($method)->willReturnCallback(
-            function () use ($state) {
-                foreach ($state as $key => $value) {
-                    $this->billPayments->curl->$key = $value;
-                }
-
-                return $this->billPayments->curl->error_code;
+        $this->curl = curl_init();
+        $this->getFunctionMock('', 'curl_copy_handle')->expects($this->once())->willReturnCallback(
+            function ($curl) use ($options) {
+                $this->assertEquals($this->billPayments->curl, $curl, 'Copy original CURL handler');
+                return $this->curl;
             }
         );
-        $class    = new ReflectionClass($this->billPayments);
-        $property = $class->getProperty('internalCurl');
-        $property->setAccessible(true);
-        $property->setValue($this->billPayments, $mock);
-        $property->setAccessible(false);
+        $this->getFunctionMock('', 'curl_setopt_array')->expects($this->once())->willReturnCallback(
+            function ($curl, $argument) use ($options) {
+                $this->assertEquals($this->curl, $curl, 'Use copy of original CURL handler');
+                $this->assertArraySubset($options, $argument, 'Receive CURL options set');
+            }
+        );
+        $this->getFunctionMock('', 'curl_exec')->expects($this->once())->willReturnCallback(
+            function ($curl) use ($result) {
+                $this->assertEquals($this->curl, $curl, 'Use copy of original CURL handler');
+                return $result;
+            }
+        );
 
-    }//end setMock()
+    }//end setMockResponse()
+
+
+    /**
+     * Setup CURL functions mock witch error result.
+     *
+     * @param array  $options Expected CURL options.
+     * @param string $error   Error message.
+     *
+     * @return void
+     */
+    protected function setMockError(array $options, $error)
+    {
+        $this->setMockResponse($options, false);
+        $info = [
+            CURLINFO_RESPONSE_CODE => 500,
+            CURLOPT_HTTPHEADER     => [],
+        ];
+        $this->getFunctionMock('', 'curl_error')->expects($this->once())->willReturnCallback(
+            function ($curl) use ($error) {
+                $this->assertEquals($this->curl, $curl, 'Use copy of original CURL handler');
+                return $error;
+            }
+        );
+        $this->getFunctionMock('', 'curl_getinfo')->expects($this->atLeastOnce())->willReturnCallback(
+            function ($curl, $name) use ($info) {
+                $this->assertEquals($this->curl, $curl, 'Use copy of original CURL handler');
+                $this->assertArrayHasKey($name, $info, 'Get CURL info param');
+                return $info[$name];
+            }
+        );
+
+    }//end setMockError()
 
 
     /**
@@ -63,14 +104,19 @@ class BillPaymentsTest extends TestCase
      *
      * @return void
      *
-     * @throws \ReflectionException
      * @throws BillPaymentsException
      */
     public function testRequestException()
     {
-        $this->setMock('get', ['error' => true, 'error_code' => 500, 'error_message' => 'test']);
-        $this->setExpectedException(BillPaymentsException::class, 'test', 500);
-        $this->billPayments->getBillInfo('');
+        $this->setMockError(
+            [
+                CURLOPT_URL           => BillPayments::BILLS_URI.'test bill ID',
+                CURLOPT_CUSTOMREQUEST => BillPayments::GET,
+            ],
+            'test CURL error'
+        );
+        $this->setException(BillPaymentsException::class, 'test CURL error', 500);
+        $this->billPayments->getBillInfo('test bill ID');
 
     }//end testRequestException()
 
@@ -82,12 +128,18 @@ class BillPaymentsTest extends TestCase
      *
      * @return void
      *
-     * @throws \Qiwi\Api\BillPaymentsException
-     * @throws \ReflectionException
+     * @throws BillPaymentsException
      */
-    protected function subTestCreateBill()
+    public function testCreateBill()
     {
-        $this->setMock('put', ['error' => false, 'response' => json_encode(['payUrl' => 'https://oplata.qiwi.com/form/?invoice_uid=d875277b-6f0f-445d-8a83-f62c7c07be77'])]);
+        $this->setMockResponse(
+            [
+                CURLOPT_URL           => BillPayments::BILLS_URI.$this->billId,
+                CURLOPT_CUSTOMREQUEST => BillPayments::POST,
+                CURLOPT_POSTFIELDS    => json_encode($this->fields),
+            ],
+            json_encode(['payUrl' => 'https://oplata.qiwi.com/form/?invoice_uid=d875277b-6f0f-445d-8a83-f62c7c07be77'])
+        );
         $bill            = $this->billPayments->createBill(
             $this->billId,
             $this->fields
@@ -95,7 +147,7 @@ class BillPaymentsTest extends TestCase
         $testPayUrlQuery = http_build_query(['successUrl' => $this->fields['successUrl']], '', '&', PHP_QUERY_RFC3986);
         $this->assertTrue(is_array($bill) && strpos($bill['payUrl'], $testPayUrlQuery) !== false, 'create bill');
 
-    }//end subTestCreateBill()
+    }//end testCreateBill()
 
 
     /**
@@ -105,10 +157,9 @@ class BillPaymentsTest extends TestCase
      *
      * @return void
      *
-     * @throws \Qiwi\Api\BillPaymentsException
-     * @throws \ReflectionException
+     * @throws BillPaymentsException
      */
-    protected function subTestGetBillInfo()
+    public function testGetBillInfo()
     {
         $testFields = [
             'customFields' => [
@@ -116,11 +167,18 @@ class BillPaymentsTest extends TestCase
                 'apiClientVersion' => CLIENT_VERSION,
             ],
         ];
-        $this->setMock('get', ['error' => false, 'response' => json_encode($testFields)]);
+
+        $this->setMockResponse(
+            [
+                CURLOPT_URL           => BillPayments::BILLS_URI.$this->billId,
+                CURLOPT_CUSTOMREQUEST => BillPayments::GET,
+            ],
+            json_encode($testFields)
+        );
         $bill = $this->billPayments->getBillInfo($this->billId);
         $this->assertArraySubset($testFields, $bill, 'returns valid bill info');
 
-    }//end subTestGetBillInfo()
+    }//end testGetBillInfo()
 
 
     /**
@@ -130,33 +188,21 @@ class BillPaymentsTest extends TestCase
      *
      * @return void
      *
-     * @throws \Qiwi\Api\BillPaymentsException
-     * @throws \ReflectionException
+     * @throws BillPaymentsException
      */
-    protected function subTestCancelBill()
+    public function testCancelBill()
     {
-        $this->setMock('post', ['error' => false, 'response' => '[]']);
+        $this->setMockResponse(
+            [
+                CURLOPT_URL           => BillPayments::BILLS_URI.$this->billId,
+                CURLOPT_CUSTOMREQUEST => BillPayments::POST,
+            ],
+            '[]'
+        );
         $bill = $this->billPayments->cancelBill($this->billId);
         $this->assertTrue(is_array($bill), 'cancel unpaid bill');
 
-    }//end subTestCancelBill()
-
-
-    /**
-     * Requests life cycle without payment.
-     *
-     * @return void
-     *
-     * @throws \Qiwi\Api\BillPaymentsException
-     * @throws \ReflectionException
-     */
-    public function testRequests()
-    {
-        $this->subTestCreateBill();
-        $this->subTestGetBillInfo();
-        $this->subTestCancelBill();
-
-    }//end testRequests()
+    }//end testCancelBill()
 
 
     /**
@@ -166,15 +212,30 @@ class BillPaymentsTest extends TestCase
      *
      * @return void
      *
-     * @throws \Qiwi\Api\BillPaymentsException
-     * @throws \ReflectionException
+     * @throws BillPaymentsException
      */
     public function testRefund()
     {
-        $this->setMock('put', ['error' => false, 'response' => '[]']);
+        $billId   = $this->config['billIdForRefundTest'];
+        $refundId = microtime();
+        $this->setMockResponse(
+            [
+                CURLOPT_URL           => BillPayments::BILLS_URI.$billId.'/refunds/'.$refundId,
+                CURLOPT_CUSTOMREQUEST => BillPayments::POST,
+                CURLOPT_POSTFIELDS    => json_encode(
+                    [
+                        'amount' => [
+                            'currency' => 'RUB',
+                            'value'    => '0.01',
+                        ],
+                    ]
+                ),
+            ],
+            '[]'
+        );
         $billRefund = $this->billPayments->refund(
-            $this->config['billIdForRefundTest'],
-            microtime(),
+            $billId,
+            $refundId,
             '0.01',
             'RUB'
         );
@@ -190,16 +251,20 @@ class BillPaymentsTest extends TestCase
      *
      * @return void
      *
-     * @throws \Qiwi\Api\BillPaymentsException
-     * @throws \ReflectionException
+     * @throws BillPaymentsException
      */
     public function testGetRefundInfo()
     {
-        $this->setMock('get', ['error' => false, 'response' => '[]']);
-        $billRefund = $this->billPayments->getRefundInfo(
-            $this->config['billIdForGetRefundInfoTest'],
-            $this->config['billRefundIdForGetRefundInfoTest']
+        $billId   = $this->config['billIdForGetRefundInfoTest'];
+        $refundId = $this->config['billRefundIdForGetRefundInfoTest'];
+        $this->setMockResponse(
+            [
+                CURLOPT_URL           => BillPayments::BILLS_URI.$billId.'/refunds/'.$refundId,
+                CURLOPT_CUSTOMREQUEST => BillPayments::GET,
+            ],
+            '[]'
         );
+        $billRefund = $this->billPayments->getRefundInfo($billId, $refundId);
         $this->assertTrue(is_array($billRefund), 'gets refund info');
 
     }//end testGetRefundInfo()
@@ -255,19 +320,19 @@ class BillPaymentsTest extends TestCase
     {
         $this->assertTrue(isset($this->billPayments->key), 'exists key attribute');
         $this->billPayments->key = 'test';
-        $this->setExpectedException(Exception::class, 'Not acceptable property key.');
+        $this->setException(Exception::class, 'Not acceptable property key.');
         $this->billPayments->key;
 
         $this->assertTrue(isset($this->billPayments->curl), 'exists curl attribute');
         $this->assertInstanceOf(Curl::class, $this->billPayments->curl, 'correct set curl attribute');
-        $this->setExpectedException(Exception::class, 'Not acceptable property curl.');
+        $this->setException(Exception::class, 'Not acceptable property curl.');
         $this->billPayments->curl = 'test';
 
         //phpcs:disable Generic,Squiz.Commenting -- Because IDE helper doc block in line.
         /** @noinspection PhpUndefinedFieldInspection */
         $this->assertFalse(isset($this->billPayments->qwerty), 'not exists attribute');
         //phpcs:enable Generic,Squiz.Commenting
-        $this->setExpectedException(Exception::class, 'Undefined property qwerty.');
+        $this->setException(Exception::class, 'Undefined property qwerty.');
         //phpcs:disable Generic,Squiz.Commenting -- Because IDE helper doc block in line.
         /** @noinspection PhpUndefinedFieldInspection */
         $this->billPayments->qwerty = 'test';

@@ -119,4 +119,28 @@ abstract class TestCase extends BaseTestCase
     }//end setUp()
 
 
+    /**
+     * Set expect exception.
+     *
+     * @param string       $class   Class name.
+     * @param null|string  $message Message text.
+     * @param null|integer $code    Code number.
+     *
+     * @return void
+     */
+    protected function setException($class, $message=null, $code=null)
+    {
+        if (null !== $code) {
+            $this->expectExceptionCode($code);
+        }
+
+        if (null !== $message) {
+            $this->expectExceptionMessage($message);
+        }
+
+        $this->expectException($class);
+
+    }//end setException()
+
+
 }//end class

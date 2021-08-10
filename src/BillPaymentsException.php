@@ -10,21 +10,19 @@
 
 namespace Qiwi\Api;
 
-use Curl\Curl;
 use Exception;
-use Throwable;
 
 /**
  * Exception of API request.
  *
- * @property Curl $curl The request is get-only.
+ * @property resource $curl The request is get-only.
  */
 class BillPaymentsException extends Exception
 {
     /**
      * The request.
      *
-     * @var Curl
+     * @var resource
      */
     protected $internalCurl;
 
@@ -32,12 +30,12 @@ class BillPaymentsException extends Exception
     /**
      * BillPaymentsException constructor.
      *
-     * @param Curl|null      $curl     The request.
+     * @param resource|null  $curl     The request.
      * @param string         $message  The error message.
      * @param int            $code     The error code.
-     * @param Throwable|null $previous The previous error
+     * @param Exception|null $previous The previous error
      */
-    public function __construct(Curl $curl=null, $message="", $code=0, Throwable $previous=null)
+    public function __construct($curl=null, $message="", $code=0, Exception $previous=null)
     {
         $this->internalCurl = $curl;
         if (true === isset($curl)) {
