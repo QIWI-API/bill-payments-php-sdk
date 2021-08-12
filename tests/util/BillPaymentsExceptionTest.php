@@ -37,7 +37,7 @@ class BillPaymentsExceptionTest extends TestCase
         $billPaymentsException = new BillPaymentsException($curl);
 
         $this->assertTrue(isset($billPaymentsException->curl), 'exists curl attribute');
-        $this->assertSame($curl, $this->billPayments->curl, 'correct set curl attribute');
+        $this->assertSame($curl, $billPaymentsException->curl, 'correct set curl attribute');
         $this->setException(Exception::class, 'Not acceptable property curl.');
         $billPaymentsException->curl = curl_copy_handle($curl);
 

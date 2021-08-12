@@ -40,15 +40,11 @@ class BillPaymentsException extends Exception
         $this->internalCurl = $curl;
         if (true === isset($curl)) {
             if (true === empty($message)) {
-                //phpcs:disable Squiz.NamingConventions.ValidVariableName -- Because dependency has incompatible coding style.
-                $message = $curl->error_message;
-                //phpcs:enable Squiz.NamingConventions.ValidVariableName
+                $message = curl_error($curl);
             }
 
             if ($code === 0) {
-                //phpcs:disable Squiz.NamingConventions.ValidVariableName -- Because dependency has incompatible coding style.
-                $code = $curl->error_code;
-                //phpcs:enable Squiz.NamingConventions.ValidVariableName
+                $code = curl_getinfo($curl, CURLINFO_RESPONSE_CODE);
             }
         }
 

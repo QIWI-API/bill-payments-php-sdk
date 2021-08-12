@@ -45,19 +45,19 @@ class BillPaymentsTest extends TestCase
     protected function setMockResponse(array $options, $result)
     {
         $this->curl = curl_init();
-        $this->getFunctionMock('', 'curl_copy_handle')->expects($this->once())->willReturnCallback(
+        $this->getFunctionMock('Qiwi\Api', 'curl_copy_handle')->expects($this->once())->willReturnCallback(
             function ($curl) use ($options) {
                 $this->assertEquals($this->billPayments->curl, $curl, 'Copy original CURL handler');
                 return $this->curl;
             }
         );
-        $this->getFunctionMock('', 'curl_setopt_array')->expects($this->once())->willReturnCallback(
+        $this->getFunctionMock('Qiwi\Api', 'curl_setopt_array')->expects($this->once())->willReturnCallback(
             function ($curl, $argument) use ($options) {
                 $this->assertEquals($this->curl, $curl, 'Use copy of original CURL handler');
                 $this->assertArraySubset($options, $argument, 'Receive CURL options set');
             }
         );
-        $this->getFunctionMock('', 'curl_exec')->expects($this->once())->willReturnCallback(
+        $this->getFunctionMock('Qiwi\Api', 'curl_exec')->expects($this->once())->willReturnCallback(
             function ($curl) use ($result) {
                 $this->assertEquals($this->curl, $curl, 'Use copy of original CURL handler');
                 return $result;
@@ -82,13 +82,13 @@ class BillPaymentsTest extends TestCase
             CURLINFO_RESPONSE_CODE => 500,
             CURLOPT_HTTPHEADER     => [],
         ];
-        $this->getFunctionMock('', 'curl_error')->expects($this->once())->willReturnCallback(
+        $this->getFunctionMock('Qiwi\Api', 'curl_error')->expects($this->once())->willReturnCallback(
             function ($curl) use ($error) {
                 $this->assertEquals($this->curl, $curl, 'Use copy of original CURL handler');
                 return $error;
             }
         );
-        $this->getFunctionMock('', 'curl_getinfo')->expects($this->atLeastOnce())->willReturnCallback(
+        $this->getFunctionMock('Qiwi\Api', 'curl_getinfo')->expects($this->atLeastOnce())->willReturnCallback(
             function ($curl, $name) use ($info) {
                 $this->assertEquals($this->curl, $curl, 'Use copy of original CURL handler');
                 $this->assertArrayHasKey($name, $info, 'Get CURL info param');
@@ -132,17 +132,24 @@ class BillPaymentsTest extends TestCase
      */
     public function testCreateBill()
     {
+        $testFields = [
+            'amount'       => [ 'value' => '1.00' ],
+            'customFields' => [
+                'apiClient'        => CLIENT_NAME,
+                'apiClientVersion' => CLIENT_VERSION,
+            ],
+        ];
         $this->setMockResponse(
             [
                 CURLOPT_URL           => BillPayments::BILLS_URI.$this->billId,
-                CURLOPT_CUSTOMREQUEST => BillPayments::POST,
-                CURLOPT_POSTFIELDS    => json_encode($this->fields),
+                CURLOPT_CUSTOMREQUEST => BillPayments::PUT,
+                CURLOPT_POSTFIELDS    => json_encode($testFields, JSON_UNESCAPED_UNICODE),
             ],
             json_encode(['payUrl' => 'https://oplata.qiwi.com/form/?invoice_uid=d875277b-6f0f-445d-8a83-f62c7c07be77'])
         );
         $bill            = $this->billPayments->createBill(
             $this->billId,
-            $this->fields
+            ($testFields + ['successUrl' => $this->fields['successUrl']])
         );
         $testPayUrlQuery = http_build_query(['successUrl' => $this->fields['successUrl']], '', '&', PHP_QUERY_RFC3986);
         $this->assertTrue(is_array($bill) && strpos($bill['payUrl'], $testPayUrlQuery) !== false, 'create bill');
@@ -194,7 +201,7 @@ class BillPaymentsTest extends TestCase
     {
         $this->setMockResponse(
             [
-                CURLOPT_URL           => BillPayments::BILLS_URI.$this->billId,
+                CURLOPT_URL           => BillPayments::BILLS_URI.$this->billId.'/reject',
                 CURLOPT_CUSTOMREQUEST => BillPayments::POST,
             ],
             '[]'
@@ -221,7 +228,7 @@ class BillPaymentsTest extends TestCase
         $this->setMockResponse(
             [
                 CURLOPT_URL           => BillPayments::BILLS_URI.$billId.'/refunds/'.$refundId,
-                CURLOPT_CUSTOMREQUEST => BillPayments::POST,
+                CURLOPT_CUSTOMREQUEST => BillPayments::PUT,
                 CURLOPT_POSTFIELDS    => json_encode(
                     [
                         'amount' => [

@@ -137,9 +137,9 @@ class BillPayments
         $this->internalCurl = curl_init();
         curl_setopt_array(
             $this->internalCurl,
-            $options + [
+            ($options + [
                 CURLOPT_USERAGENT => CLIENT_NAME.'-'.CLIENT_VERSION,
-            ]
+            ])
         );
 
     }//end __construct()
@@ -565,7 +565,6 @@ class BillPayments
     {
         $curl    = curl_copy_handle($this->internalCurl);
         $url     = self::BILLS_URI.$uri;
-        $body    = null;
         $headers = [
             'Accept: application/json',
             'Authorization: Bearer '.$this->secretKey,
