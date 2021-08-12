@@ -137,12 +137,9 @@ class BillPayments
         $this->internalCurl = curl_init();
         curl_setopt_array(
             $this->internalCurl,
-            array_merge(
-                [
-                    CURLOPT_USERAGENT => CLIENT_NAME.'-'.CLIENT_VERSION,
-                ],
-                $options
-            )
+            $options + [
+                CURLOPT_USERAGENT => CLIENT_NAME.'-'.CLIENT_VERSION,
+            ]
         );
 
     }//end __construct()
@@ -569,16 +566,13 @@ class BillPayments
         $curl    = curl_copy_handle($this->internalCurl);
         $url     = self::BILLS_URI.$uri;
         $body    = null;
-        $headers = array_merge(
-            curl_getinfo($curl, CURLOPT_HTTPHEADER),
-            [
-                'Accept: application/json',
-                'Authorization: Bearer '.$this->secretKey,
-            ]
-        );
+        $headers = [
+            'Accept: application/json',
+            'Authorization: Bearer '.$this->secretKey,
+        ];
         if (true !== empty($body) && self::GET !== $method) {
             $body    = json_encode($body, JSON_UNESCAPED_UNICODE);
-            $headers = array_combine(
+            $headers = array_merge(
                 $headers,
                 [
                     'Content-Type: application/json;charset=UTF-8',
